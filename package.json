@@ -1,0 +1,14 @@
+{
+  "name": "cda-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Révisions personnelles du titre professionnel CDA, en local et sans dépendances.",
+  "scripts": {
+    "start": "node server.mjs --open",
+    "dev": "node server.mjs",
+    "test": "node --test tests/*.test.js",
+    "test:sources": "node scripts/check-sources.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

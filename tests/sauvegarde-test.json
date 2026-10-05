@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "settings": {
+    "examDate": "",
+    "dailyCards": 10,
+    "dailyQuestions": 2
+  },
+  "reviews": {},
+  "activity": {},
+  "answers": {},
+  "notes": {
+    "cp8": "Exemple importé de test : requêtes paramétrées."
+  },
+  "bookmarks": [],
+  "completedSheets": [],
+  "completedPresentation": [],
+  "writtenRuns": [],
+  "cardSessions": 0
+}
