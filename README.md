@@ -1,6 +1,6 @@
 # CDA Studio
 
-Un espace personnel de révision du titre professionnel **Concepteur développeur d’applications**, construit à partir du référentiel CDA 2023, du dossier GamerChallenge et du dossier professionnel présents dans ce workspace.
+Un espace de révision du titre professionnel **Concepteur développeur d’applications**. Le référentiel CDA 2023 organise les compétences ; les documentations officielles, spécifications et références académiques servent à expliquer les notions. Les dossiers personnels alimentent les entraînements au jury et la soutenance blanche.
 
 Dépôt : [Zer0absolute/exam-cda-](https://github.com/Zer0absolute/exam-cda-).
 
@@ -26,23 +26,24 @@ Si le port est utilisé, vérifier si le site tourne déjà à cette adresse. Po
 
 - **Aujourd’hui** : rituel, activité de la semaine, répétitions dues et progression par bloc.
 - **Fiches mémo** : les 11 compétences, repères, exemples, checklists et notes personnelles ; recherche, favoris et impression de l’ensemble des fiches.
-- **Technos du cours** : 33 sections pratiques issues des supports O’clock : Merise, TypeScript, SQL, Docker, tests JavaScript, backend, React, MongoDB, GraphQL, temps réel et internationalisation. Exemples de code, notes personnelles et cartes dédiées pour chaque sujet. Merise commence par des user stories, des critères d’acceptation et un cas guidé du besoin au modèle ; deux exercices proposent une correction à révéler.
-- **Cartes** : 248 questions de rappel actif ; répétition espacée locale avec autoévaluation, filtres par compétence et par technologie, export TSV pour Anki. Les cartes dues passent avant les nouvelles. Le mode « Tout pratiquer » inclut celles programmées dans le futur et modifie leur planning.
-- **Questions du jury** : 48 questions techniques, sur GamerChallenge et sur le dossier professionnel ; réponse guidée, attentes, relance et brouillon personnel.
+- **Cours & notions** : Merise, TypeScript, SQL, Docker, tests JavaScript, backend, React, MongoDB, GraphQL, temps réel et internationalisation. Définitions progressives, exemples autonomes, prérequis, résultats attendus, exercices corrigés, sommaire et références près de chaque notion. Merise comprend 19 fiches : cardinalités, associations binaires/ternaires, MCD, MLD, MPD, dépendances fonctionnelles, 1NF/2NF/3NF/BCNF, distinction entre user story et cas d’utilisation UML.
+- **Cartes** : questions de rappel actif sur les concepts et de petits exemples entièrement donnés ; répétition espacée locale, filtres par compétence et technologie, liens vers la bonne leçon, reprise de la carte après lecture et export Anki avec références. Les cartes dues passent avant les nouvelles. Le mode « Tout pratiquer » inclut celles programmées dans le futur et modifie leur planning.
+- **Questions & réponses** : « Notions générales » propose 24 cas autonomes sur les 11 technologies, dont 8 Merise, avec explication, critères et sources primaires. « Mes dossiers » conserve les 48 questions techniques et de préparation du jury à partir des dossiers ; les deux modes disposent d’un brouillon personnel et d’une autoévaluation.
 - **Écrit** : 8 QCU français, 8 questions ouvertes anglais B1, 2 rédactions françaises supplémentaires ; simulation de 2 QCU FR + 2 ouvertes EN en 30 minutes.
 - **Soutenance blanche** : présentation 40 min, entretien technique 45 min, questionnaire 30 min et entretien final 20 min ; déroulé pédagogique de 40 minutes et repères des dossiers.
 - **Réglages** : date de soutenance, objectifs quotidiens, export et import de progression.
 - **Référentiel & dossiers** : accès aux documents locaux et aux sources techniques officielles.
 
-Les questions sont des exercices de révision créés pour ce site, pas des sujets officiels. Les réponses orales sont des trames : les reformuler selon son travail réel et les preuves disponibles. L’anglais se corrige avec une grille et un exemple ; le site ne donne pas de note automatique aux réponses ouvertes.
+Les questions sont des exercices de révision créés pour ce site, pas des sujets officiels. Pour les notions, toutes les règles et données du cas sont fournies. Dans « Mes dossiers », adapter les trames à son travail réel et aux preuves disponibles. L’anglais se corrige avec une grille et un exemple ; le site ne donne pas de note automatique aux réponses ouvertes.
 
 ## Routine conseillée
 
-1. Faire la session de cartes du jour (15 par défaut).
-2. Répondre à deux questions du jury **à voix haute**, avant de révéler les réponses.
-3. Relire une fiche, ajouter un exemple personnel et valider la lecture du jour.
-4. Ajouter régulièrement un exercice anglais ou une simulation écrite.
-5. Répéter la présentation chronométrée et une soutenance complète avant le jour J.
+1. Choisir une notion et lire la définition puis l’exemple autonome.
+2. Tenter l’exercice avant de révéler la correction, puis valider sa lecture.
+3. Réviser les cartes de cette technologie (15 par défaut) ; relire la bonne leçon si une question bloque.
+4. Expliquer deux notions **à voix haute** à partir des cas fournis ; utiliser « Mes dossiers » pour préparer ensuite l’entretien sur ses réalisations.
+5. Ajouter régulièrement un exercice anglais ou une simulation écrite.
+6. Répéter la présentation chronométrée et une soutenance complète avant le jour J.
 
 Dans les cartes : `Espace` révèle la réponse, `1` = à revoir, `2` = difficile, `3` = bien, `4` = facile. Une carte oubliée est rappelée une fois dans la session, puis garde une échéance de dix minutes si elle reste difficile. Le planning est un algorithme simple propre au site, indépendant de celui d’Anki.
 
@@ -58,21 +59,21 @@ Si une sauvegarde locale devient illisible, le site conserve une copie brute acc
 
 ## Anki
 
-Cliquer sur « Exporter pour Anki », puis importer le fichier `.tsv` dans Anki avec un type de note Recto/Verso. Utiliser la **tabulation** comme séparateur et associer les champs **Recto**, **Verso**, **Tags**. Le fichier contient les directives d’import pour le séparateur et l’HTML. Si la version d’Anki le demande, activer **Autoriser le HTML**. Depuis Cartes, l’export respecte les filtres de compétence et de technologie. Depuis Réglages, il exporte les 248 cartes. Les tags permettent de filtrer les compétences (`CDA::CP1`, etc.) et les sujets du cours. L’export n’inclut pas le planning de révision du site.
+Cliquer sur « Exporter pour Anki », puis importer le fichier `.tsv` dans Anki avec un type de note Recto/Verso. Utiliser la **tabulation** comme séparateur et associer les champs **Recto**, **Verso**, **Tags**. Le fichier contient les directives d’import pour le séparateur et l’HTML. Si la version d’Anki le demande, activer **Autoriser le HTML**. Depuis Cartes, l’export respecte les filtres de compétence et de technologie. Depuis Réglages, il exporte toutes les cartes. Le verso conserve les liens vers les références de la notion. Les tags permettent de filtrer les compétences (`CDA::CP1`, etc.) et les sujets du cours. L’export n’inclut pas le planning de révision du site.
 
 ## Documents et maintenance
 
-Les documents personnels et les supports de cours sont facultatifs et restent hors du dépôt. Toutes les fiches, cartes et fonctions de révision sont disponibles après un clone. Les quatre liens vers les documents nécessitent les fichiers d’origine, selon les chemins déclarés dans `lib/documents.js`.
+Les documents personnels sont facultatifs et restent hors du dépôt. Toutes les fiches, cartes et fonctions de révision sont disponibles après un clone. Les quatre liens vers les documents nécessitent les fichiers d’origine, selon les chemins déclarés dans `lib/documents.js`.
 
-Par défaut, le serveur cherche ces fichiers dans le dossier parent du site. L’installation locale `revisions-cda` conserve ainsi ses liens actuels. Pour un clone situé ailleurs, indiquer le dossier contenant `dossier projet`, `dossier-professionnel-cda` et les supports de formation :
+Par défaut, le serveur cherche ces fichiers dans le dossier parent du site. L’installation locale `revisions-cda` conserve ainsi ses liens actuels. Pour un clone situé ailleurs, indiquer le dossier contenant `dossier projet`, `dossier-professionnel-cda` :
 
 ```sh
 CDA_WORKSPACE="/chemin/vers/oclock" npm start
 ```
 
-Sans ces fichiers, les liens vers les documents affichent « Document introuvable ». Les sources affichées dans le site indiquent les supports utilisés pour créer le contenu, sans les redistribuer. Les notes et la progression personnelles restent dans le navigateur ; les JSON de `tests` sont des données de test fictives. Les captures de vérification restent locales.
+Sans ces fichiers, les liens vers les documents affichent « Document introuvable ». Les références primaires sont liées dans le site ; leurs documents ne sont pas redistribués. Les exemples et exercices sont des créations pédagogiques autonomes. Les notes et la progression personnelles restent dans le navigateur ; les JSON de `tests` sont des données de test fictives. Les captures de vérification restent locales.
 
-Les contenus pédagogiques se trouvent dans `data/knowledge.js`, `data/exam.js` et les modules `data/course-*.js` assemblés par `data/courses.js`. Ce dernier conserve aussi les chemins des supports de cours utilisés. Ils peuvent être mis à jour sans effacer la progression, à condition de conserver les identifiants des cartes et questions existantes. Le référentiel fourni inclut REAC et RE : le RE précise deux questions fermées à choix unique en français et deux questions ouvertes à réponses courtes en anglais.
+Les contenus pédagogiques se trouvent dans `data/knowledge.js`, `data/exam.js` et les modules `data/course-*.js` assemblés par `data/courses.js`. Les références des notions générales se trouvent dans `data/reference-sources.js` ; chaque module de cours déclare ses propres références et les liens des cartes vers leurs leçons. Ils peuvent être mis à jour sans effacer la progression, à condition de conserver les identifiants des cartes et questions existantes. Le référentiel fourni inclut REAC et RE : le RE précise deux questions fermées à choix unique en français et deux questions ouvertes à réponses courtes en anglais.
 
 ## Vérification
 
@@ -80,9 +81,9 @@ Les contenus pédagogiques se trouvent dans `data/knowledge.js`, `data/exam.js` 
 npm test
 ```
 
-Les 36 tests sont autonomes : planning de répétition, jours locaux et séries d’activité, import validé, export Anki, cohérence du contenu et chemins des sources. Ils fonctionnent sans les dossiers personnels.
+Les tests sont autonomes : planning de répétition, jours locaux et séries d’activité, import validé, export Anki, cohérence du contenu, couverture des notions Merise, références par fiche/carte, liens vers les leçons et absence de références aux projets personnels dans les supports d’apprentissage. Ils fonctionnent sans les dossiers personnels.
 
-Pour vérifier aussi la présence et le format des sources et documents d’origine :
+Pour vérifier aussi la présence et le format des dossiers personnels et du référentiel locaux :
 
 ```sh
 npm run test:sources

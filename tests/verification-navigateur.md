@@ -61,3 +61,19 @@ Vérification le 4 octobre 2026 dans un nouvel onglet `?test`, sans interaction 
 - Lancement de la copie sur le port de test 4174 : la page et les modules répondent en HTTP 200. Les documents facultatifs absents et les fichiers Git répondent en HTTP 404.
 - `CDA_WORKSPACE` permet au serveur et à la vérification des sources de retrouver les documents depuis un clone situé ailleurs. Le lancement local d’origine garde son dossier parent par défaut.
 - La progression reste stockée dans le navigateur ; aucune sauvegarde personnelle ni PDF d’origine n’est ajouté au dépôt. Les fixtures JSON sont fictives, les captures de vérification restent locales.
+
+## Notions autonomes et références primaires — 8 octobre 2026
+
+Cette vérification remplace les anciens exemples de cours liés aux projets personnels. L’apprentissage des notions et la préparation des dossiers sont désormais deux usages distincts.
+
+- 67 leçons de technologie, dont 19 Merise ; 302 cartes. Définitions, règles et données des exemples sont fournies. Chaque leçon possède un exercice corrigé et ses références ; chaque carte conserve ses références dans le site et dans l’export Anki.
+- Les références distinguent documentations officielles des outils, références académiques de modélisation/normalisation et spécification UML OMG. Les cas et corrections sont des exercices créés pour le site.
+- « Questions & réponses » ouvre par défaut « Notions générales » : 24 cas autonomes sur les 11 technologies, dont 8 Merise. Le filtre SQL retourne les deux cas prévus ; le filtre Merise en retourne huit. Les réponses expliquées affichent leurs références.
+- « Mes dossiers » conserve les 48 questions précédentes. Depuis l’entretien technique de la soutenance blanche, le lien ouvre ce mode avec les 21 questions techniques filtrées.
+- Le sommaire Merise conduit à la section demandée et place le focus sur son titre. Le cours explique les quatre cardinalités et fournit les données Alice/Bilal ; le calcul n’exige aucun souvenir d’OQuiz.
+- Depuis une carte Merise, « Relire la fiche » ouvre la bonne explication ; « Revenir à ma carte » conserve la question et sa réponse déjà révélée.
+- À 390 pixels de viewport, les cartes avec références et les questions Merise ne débordent pas horizontalement. La taille normale a été rétablie. Aucun avertissement ni erreur JavaScript capturé pendant ces parcours.
+- Les vérifications utilisent un onglet `?test` et un stockage séparé. L’onglet de travail, les notes et le planning de répétition personnels n’ont pas été réinitialisés. Les identifiants précédents sont conservés ; les nouveaux concepts utilisent de nouveaux identifiants.
+- `npm test` : 44 tests réussis. `npm run test:sources` : 7 références locales des dossiers et 4 documents présents. Syntaxe de `app.js`, cohérence des 302 lignes Anki et `git diff --check` vérifiées.
+- Des exemples Node.js, Vitest, Express/Zod, JWT et Prisma 6.19 ont été exécutés dans des ateliers temporaires. Sept snippets TypeScript ont été vérifiés avec le compilateur en mode strict ; les résultats de six requêtes SELECT ont été vérifiés avec SQLite sur le sous-ensemble commun indiqué. Cela ne constitue pas une exécution des DDL PostgreSQL ni des exemples Docker.
+- Capture locale de la section cardinalités : `pedagogie-merise.png` (ignorée par Git).

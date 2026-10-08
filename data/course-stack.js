@@ -1,356 +1,1728 @@
-// Complément fondé sur les supports et le code du dépôt de formation OQuiz.
-// Les exemples de révision illustrent le cours ; ils n'attestent pas d'une contribution personnelle.
+// Leçons autonomes : exemples originaux, documentations primaires consultées le 8 octobre 2026.
+// Les 44 identifiants de cartes restent stables pour conserver la progression.
 export const courseSections = [
   {
-    cp: 'cp1', technology: 'docker',
-    section: {
-      title: 'Docker · image, conteneur et diagnostic',
-      body: 'Une image est un modèle construit avec ses dépendances. Un conteneur est une instance de cette image, avec un processus et une couche de fichiers modifiable. Il partage le noyau Linux de son environnement ; sur macOS, Docker Desktop utilise une VM Linux. Un conteneur arrêté existe encore et peut redémarrer.',
-      bullets: [
-        'docker build fabrique une image ; docker run crée et démarre un conteneur ; docker start redémarre un conteneur existant.',
-        'docker ps montre les conteneurs actifs ; docker ps -a montre aussi ceux qui sont arrêtés. Lire le statut et le code de sortie avant de chercher la panne.',
-        'docker logs montre stdout/stderr ; docker exec exécute une commande dans un conteneur actif. Les images Alpine ont souvent sh, sans bash.',
-        '-p 5433:5432 publie le port 5432 du conteneur sur le port 5433 de l’hôte. EXPOSE documente un port sans le publier.',
+    "cp": "cp1",
+    "technology": "docker",
+    "section": {
+      "title": "Docker 1 · comprendre image et conteneur",
+      "body": "Docker lance une application dans un environnement isolé appelé conteneur. Une image est le paquet de fichiers et de réglages utilisé pour créer cet environnement. Pense à une recette déjà préparée (image) et à une exécution de cette recette (conteneur). Ici, on lance un petit serveur web Nginx, sans application préalable.",
+      "bullets": [
+        "Prérequis : Docker installé et démarré, connexion pour télécharger l’image et port 8088 disponible. Les commandes vont dans un terminal.",
+        "docker run crée puis démarre ; docker stop arrête ; docker start redémarre le même conteneur. Un conteneur arrêté existe encore.",
+        "Le port est un numéro de point d’accès réseau. -p 127.0.0.1:8088:80 relie le port 8088 de ta machine au port 80 du conteneur, uniquement en local.",
+        "docker ps -a indique les états ; docker logs montre les messages du programme ; docker exec lance une commande dans un conteneur actif.",
+        "Résultat attendu : http://127.0.0.1:8088 affiche la page d’accueil Nginx. Sur macOS, les conteneurs Linux tournent dans l’environnement Linux de Docker Desktop."
       ],
-      code: `# Dans un projet avec un fichier Compose
-docker compose ps
-docker compose logs --tail=50 api
-docker compose exec api sh
-docker compose exec database pg_isready
-# Pour un conteneur individuel
-docker ps -a
-docker logs --tail=50 nom-du-conteneur`,
-    },
+      "code": "docker run -d --name atelier-web -p 127.0.0.1:8088:80 nginx:alpine\n# Ouvre http://127.0.0.1:8088 dans ton navigateur.\ndocker ps -a\ndocker logs --tail=10 atelier-web\ndocker exec atelier-web nginx -v\ndocker stop atelier-web\ndocker start atelier-web\n# Nettoyage facultatif de CET atelier :\n# docker stop atelier-web\n# docker rm atelier-web",
+      "exercise": {
+        "prompt": "Après docker stop atelier-web, faut-il refaire docker run ? Explique ce qui existe encore.",
+        "answer": "Non : docker start atelier-web relance le conteneur conservé. run tenterait de créer un autre conteneur avec le même nom et échouerait. L’image nginx:alpine est également conservée."
+      },
+      "sources": [
+        {
+          "label": "Docker · définition d’une image",
+          "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/",
+          "kind": "official"
+        },
+        {
+          "label": "Docker · définition d’un conteneur",
+          "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/",
+          "kind": "official"
+        },
+        {
+          "label": "Docker · créer et démarrer un conteneur",
+          "url": "https://docs.docker.com/reference/cli/docker/container/run/",
+          "kind": "official"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp1', technology: 'docker',
-    section: {
-      title: 'Docker · Dockerfile, cache et configuration',
-      body: 'Le Dockerfile décrit la fabrication de l’image. RUN exécute une commande pendant le build ; CMD définit la commande de démarrage. Le Dockerfile API du cours compile TypeScript ; celui du client construit avec Vite puis copie dist dans Nginx. Les extraits ci-dessous sont des modèles de révision à adapter à la configuration Prisma du projet.',
-      bullets: [
-        'FROM choisit une image de base ; WORKDIR définit le répertoire courant ; COPY ajoute des fichiers du contexte de build.',
-        'Copier package.json et package-lock.json puis installer avant de copier les sources permet de réutiliser l’installation si seul le code change. npm ci utilise le lockfile et échoue s’il est incohérent.',
-        '.dockerignore exclut notamment node_modules, .git et .env du contexte envoyé au build.',
-        'ARG sert au build ; environment dans Compose configure l’exécution. Les valeurs VITE_* sont intégrées au JavaScript du navigateur lors du build et sont publiques.',
-        'Une build multi-stage conserve dans l’image finale les fichiers nécessaires à l’exécution. Les secrets ne se placent pas dans ARG, ENV ou le code client.',
+    "cp": "cp1",
+    "technology": "docker",
+    "section": {
+      "title": "Docker 2 · fabriquer une image avec un Dockerfile",
+      "body": "Un Dockerfile est un fichier texte qui décrit comment fabriquer une image. Le build est cette fabrication. L’exemple crée une API minuscule : un serveur qui répond en JSON, un format texte pour échanger des objets. Tout le code est fourni ; aucune bibliothèque à installer.",
+      "bullets": [
+        "Prérequis : Docker démarré. Crée un dossier vide ; enregistre les trois fichiers ci-dessous, puis lance les commandes depuis ce dossier.",
+        "FROM choisit la base ; WORKDIR choisit le dossier de travail ; COPY ajoute un fichier. CMD définit ce qui démarre quand le conteneur est lancé.",
+        "RUN exécute une commande pendant la fabrication, par exemple installer des dépendances. Ici il n’en faut aucune. EXPOSE documenterait un port sans le publier.",
+        "Le cache réutilise les étapes inchangées. Avec des dépendances npm, copier package.json et le lockfile (fichier verrouillant leurs versions), exécuter npm ci, puis copier les sources évite de réinstaller pour un simple changement de code.",
+        "Une variable d’environnement configure le programme au démarrage. ARG configure le build. .dockerignore exclut des fichiers de ce build ; un secret ne doit pas être copié dans l’image.",
+        "curl envoie une requête HTTP depuis le terminal. Résultat attendu : il renvoie {\"title\":\"Lire\"}. Changer TITLE au lancement change le titre sans reconstruire le code."
       ],
-      code: `FROM node:22-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-# Ajouter la génération Prisma si le projet en utilise
-RUN npm run build
-CMD ["node", "dist/index.js"]`,
-    },
+      "code": "# Fichier server.mjs\nimport { createServer } from 'node:http';\nconst server = createServer((_req, res) => {\n  res.writeHead(200, { 'Content-Type': 'application/json' });\n  res.end(JSON.stringify({ title: process.env.TITLE ?? 'Lire' }));\n});\nserver.listen(3000, '0.0.0.0');\n\n# Fichier Dockerfile\nFROM node:24-alpine\nWORKDIR /app\nCOPY server.mjs ./\nCMD [\"node\", \"server.mjs\"]\n\n# Fichier .dockerignore\n.env\nnode_modules\n.git\n\n# Terminal, dans le dossier de ces fichiers\ndocker build -t atelier-api .\ndocker run -d --name atelier-api-run -p 127.0.0.1:8089:3000 -e TITLE=Lire atelier-api\ncurl http://127.0.0.1:8089\n# Arrêt facultatif : docker stop atelier-api-run",
+      "exercise": {
+        "prompt": "Tu modifies server.mjs, puis redémarres le conteneur. Le nouveau code est-il automatiquement présent ?",
+        "answer": "Non : COPY a enregistré l’ancien fichier dans l’image. Il faut reconstruire l’image puis recréer le conteneur avec cette image. Un redémarrage du conteneur existant ne remplace pas ses fichiers."
+      },
+      "sources": [
+        {
+          "label": "Docker · instructions du Dockerfile",
+          "url": "https://docs.docker.com/reference/dockerfile/",
+          "kind": "official"
+        },
+        {
+          "label": "Docker · réutilisation du cache",
+          "url": "https://docs.docker.com/get-started/docker-concepts/building-images/using-the-build-cache/",
+          "kind": "official"
+        },
+        {
+          "label": "npm · installation depuis un lockfile",
+          "url": "https://docs.npmjs.com/cli/v11/commands/npm-ci/",
+          "kind": "official"
+        },
+        {
+          "label": "Node.js · créer un serveur HTTP",
+          "url": "https://nodejs.org/api/http.html",
+          "kind": "official"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp10', technology: 'docker',
-    section: {
-      title: 'Docker · Compose, réseau, volumes et disponibilité',
-      body: 'Compose décrit plusieurs services, leurs réseaux, volumes et variables. Deux services d’un même réseau se joignent par leur nom de service et leur port interne. Une API dans Docker contacte database:5432 ; localhost désigne le conteneur lui-même. Le navigateur, lui, utilise une adresse accessible depuis la machine de l’utilisateur.',
-      bullets: [
-        'Un volume nommé conserve les données PostgreSQL après la suppression du conteneur. Un bind mount expose un chemin de l’hôte, utile pour les sources en développement.',
-        'docker compose up -d --build construit et démarre ; docker compose down supprime les conteneurs et réseaux du projet, en conservant normalement les volumes nommés. down -v supprime aussi ces volumes et leurs données.',
-        'depends_on sous forme simple impose un ordre de démarrage, sans prouver que la BDD accepte les connexions. Un healthcheck et condition: service_healthy attendent sa disponibilité initiale.',
-        'Une BDD prête peut encore manquer de tables : appliquer les migrations avant les requêtes. Prévoir aussi des reprises de connexion si elle devient indisponible ensuite.',
+    "cp": "cp10",
+    "technology": "docker",
+    "section": {
+      "title": "Docker 3 · relier des services avec Compose",
+      "body": "Compose lit un fichier YAML qui décrit plusieurs services, c’est-à-dire plusieurs programmes à lancer. Il crée un réseau pour qu’ils puissent communiquer par leur nom. L’exemple lance un serveur web et un deuxième conteneur qui lui demande sa page : il montre la différence entre une adresse interne et une adresse accessible depuis ton navigateur.",
+      "bullets": [
+        "Prérequis : Docker avec Compose, dossier vide et port 8090 disponible. Enregistre le YAML sous compose.yaml, puis lance les commandes indiquées.",
+        "Entre services, http://web:80 utilise le nom web et son port interne. Depuis ton navigateur, http://127.0.0.1:8090 utilise le port publié sur la machine.",
+        "localhost désigne l’environnement où le programme s’exécute. Dans le client conteneurisé, localhost ne désigne pas le service web.",
+        "Un healthcheck est une commande qui vérifie la disponibilité. depends_on avec service_healthy attend sa réussite initiale ; la forme simple de depends_on attend seulement le démarrage.",
+        "Résultat attendu : les logs de client contiennent une page HTML Nginx, puis client s’arrête normalement. web continue à servir la page."
       ],
-      code: `services:
-  database:
-    image: postgres:17
-    environment:
-      POSTGRES_USER: oquiz
-      POSTGRES_DB: oquiz
-      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
-    volumes:
-      - oquiz_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U oquiz -d oquiz"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-  api:
-    build: ./api
-    depends_on:
-      database:
-        condition: service_healthy
-volumes:
-  oquiz_data:`,
-    },
+      "code": "# Fichier compose.yaml\nservices:\n  web:\n    image: nginx:alpine\n    ports:\n      - \"127.0.0.1:8090:80\"\n    healthcheck:\n      test: [\"CMD-SHELL\", \"wget -q -O /dev/null http://127.0.0.1:80\"]\n      interval: 2s\n      timeout: 2s\n      retries: 10\n  client:\n    image: alpine:3.22\n    command: [\"wget\", \"-q\", \"-O\", \"-\", \"http://web:80\"]\n    depends_on:\n      web:\n        condition: service_healthy\n\n# Terminal, dans le dossier du YAML\ndocker compose up -d\ndocker compose ps -a\ndocker compose logs client\n# Arrêt de cet atelier : docker compose down",
+      "exercise": {
+        "prompt": "Le conteneur client peut-il utiliser http://localhost:8090 pour joindre web ? Quelle adresse doit-il utiliser ?",
+        "answer": "Il utilise http://web:80. localhost dans client viserait client lui-même ; 8090 est le port publié pour ta machine, alors que web écoute sur 80 dans le réseau Compose."
+      },
+      "sources": [
+        {
+          "label": "Docker Compose · réseau et noms de services",
+          "url": "https://docs.docker.com/compose/how-tos/networking/",
+          "kind": "official"
+        },
+        {
+          "label": "Docker Compose · démarrage et disponibilité",
+          "url": "https://docs.docker.com/compose/how-tos/startup-order/",
+          "kind": "official"
+        },
+        {
+          "label": "Docker Compose · arrêt et suppression",
+          "url": "https://docs.docker.com/reference/cli/docker/compose/down/",
+          "kind": "official"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp9', technology: 'tests',
-    section: {
-      title: 'Tests JavaScript · node:test, assertions et AAA',
-      body: 'Le cours SC02E03 pratique node:test et node:assert côté API, puis Vitest côté client. Le runner lance les tests ; la bibliothèque d’assertions vérifie les résultats. Organise chaque test en Arrange (préparer), Act (agir), Assert (vérifier), avec un comportement observable et un attendu défini indépendamment du résultat.',
-      bullets: [
-        'Un test unitaire vérifie une fonction ou unité isolée ; un test d’intégration vérifie plusieurs composants ensemble ; un E2E déroule un scénario utilisateur complet.',
-        'assert.strictEqual compare des primitives ou l’identité d’objets ; assert.deepStrictEqual compare leur structure. assert.ok contrôle une condition.',
-        'assert.throws attend une exception synchrone ; await assert.rejects attend le rejet d’une promesse. Ne pas oublier await dans un test asynchrone.',
-        'Tester le cas valide, les limites et les erreurs. assert.strictEqual(data.length, data.length) réussit toujours et ne valide aucune exigence.',
+    "cp": "cp10",
+    "technology": "docker",
+    "section": {
+      "title": "Docker 4 · conserver les données avec un volume",
+      "body": "Un fichier écrit dans un conteneur appartient normalement à ce conteneur et disparaît si celui-ci est supprimé. Un volume est un espace de stockage géré par Docker, que plusieurs conteneurs successifs peuvent retrouver. Un bind mount lie plutôt un dossier précis de ta machine à un dossier du conteneur.",
+      "bullets": [
+        "Prérequis : Docker démarré. Ici, on écrit une seule tâche dans un volume nommé atelier-notes ; aucun serveur de base de données n’est nécessaire.",
+        "Dans -v atelier-notes:/data, la partie gauche est le volume, la partie droite son emplacement visible dans le conteneur.",
+        "--rm supprime ce conteneur après sa commande, mais laisse le volume nommé. Le deuxième conteneur retrouve donc le fichier du premier.",
+        "Résultat attendu : la dernière commande affiche Lire. La persistance concerne les fichiers réellement placés dans le volume, pas tous les fichiers du conteneur.",
+        "Avec Compose, down conserve normalement les volumes nommés ; down -v les supprime aussi. Ne pas utiliser -v si ces données doivent rester."
       ],
-      code: `import { describe, it } from 'node:test';
-import assert from 'node:assert/strict';
-import { isValidPassword } from './validators.ts';
-
-describe('isValidPassword', () => {
-  it('refuse un mot de passe sans majuscule', () => {
-    const password = 'mot2passe!'; // Arrange
-    const result = isValidPassword(password); // Act
-    assert.strictEqual(result, false); // Assert
-  });
-});`,
-    },
+      "code": "docker volume create atelier-notes\n# Premier conteneur : écrire puis se supprimer.\ndocker run --rm -v atelier-notes:/data alpine:3.22 sh -c 'echo Lire > /data/tache.txt'\n# Deuxième conteneur : lire le même volume.\ndocker run --rm -v atelier-notes:/data alpine:3.22 cat /data/tache.txt\n# Résultat : Lire",
+      "exercise": {
+        "prompt": "Pourquoi peut-on lire tache.txt alors que le conteneur qui l’a créé a été supprimé ?",
+        "answer": "Parce que le fichier est dans atelier-notes, un volume distinct du conteneur. Le nouveau conteneur monte ce volume au même emplacement /data et retrouve les données."
+      },
+      "sources": [
+        {
+          "label": "Docker · volumes persistants",
+          "url": "https://docs.docker.com/engine/storage/volumes/",
+          "kind": "official"
+        },
+        {
+          "label": "Docker · créer et démarrer un conteneur",
+          "url": "https://docs.docker.com/reference/cli/docker/container/run/",
+          "kind": "official"
+        },
+        {
+          "label": "Docker Compose · arrêt et suppression",
+          "url": "https://docs.docker.com/reference/cli/docker/compose/down/",
+          "kind": "official"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp9', technology: 'tests',
-    section: {
-      title: 'Tests JavaScript · mocks, injection et asynchronisme',
-      body: 'Pour tester une unité sans lancer PostgreSQL ou une API externe, remplace ses dépendances par des doubles contrôlables. L’injection de dépendances passe explicitement un repository ou une fonction au code testé. Un mock peut contrôler le résultat et enregistrer les appels ; il ne prouve pas que la vraie dépendance fonctionne.',
-      bullets: [
-        'Dans node:test, t.mock.fn crée un double de fonction ; t.mock.method remplace une méthode d’objet. Les mocks liés au contexte du test sont restaurés à sa fin.',
-        'Vérifier les arguments et le résultat : « le service cherche le niveau 7 puis renvoie son nom ». Un compteur d’appels seul ne suffit pas.',
-        'Configurer une promesse résolue pour le succès et rejetée pour l’erreur. Le callback du test doit retourner ou attendre le travail asynchrone.',
-        'Réduire les mocks aux frontières pertinentes. Un test qui recopie toutes les étapes internes devient fragile lors d’une refactorisation.',
+    "cp": "cp9",
+    "technology": "tests",
+    "section": {
+      "title": "Tests 1 · vérifier une fonction avec node:test",
+      "body": "Un test automatisé exécute du code et compare le résultat à ce qu’on attend. Le test runner lance les tests ; une assertion est la vérification qui échoue si le résultat est incorrect. Node possède ces outils : node:test pour lancer, node:assert pour vérifier. Le premier exemple compte des tâches terminées.",
+      "bullets": [
+        "Prérequis : Node 22 ou plus récent. Copie tout le JavaScript dans compte.test.mjs et lance node --test compte.test.mjs ; aucun package à installer.",
+        "Arrange : préparer les entrées. Act : appeler la fonction. Assert : vérifier une valeur attendue choisie à l’avance.",
+        "strictEqual compare une valeur simple ou l’identité d’un objet ; deepStrictEqual compare aussi la structure des objets et tableaux. ok attend une condition vraie.",
+        "Résultat attendu : deux tests réussissent. La liste contient une tâche done: true et une done: false : le total attendu est donc 1.",
+        "Un test unitaire vérifie une unité comme cette fonction. Un test d’intégration relie plusieurs composants. Un E2E parcourt un scénario utilisateur complet."
       ],
-      code: `import { it } from 'node:test';
-import assert from 'node:assert/strict';
-
-const makeService = repo => async id => {
-  const level = await repo.findById(id);
-  if (!level) throw new Error('Level absent');
-  return level.name;
-};
-
-it('transmet l’id et renvoie le nom', async t => {
-  const findById = t.mock.fn(async () => ({ id: 7, name: 'Facile' }));
-  const getName = makeService({ findById });
-  assert.strictEqual(await getName(7), 'Facile');
-  assert.deepStrictEqual(findById.mock.calls[0].arguments, [7]);
-  assert.strictEqual(findById.mock.callCount(), 1);
-});`,
-    },
+      "code": "import test from 'node:test';\nimport assert from 'node:assert/strict';\n\nconst countDone = tasks => tasks.filter(task => task.done).length;\n\ntest('compte uniquement les tâches terminées', () => {\n  const tasks = [\n    { title: 'Lire', done: true },\n    { title: 'Marcher', done: false },\n  ]; // Arrange\n  const result = countDone(tasks); // Act\n  assert.strictEqual(result, 1); // Assert\n});\n\ntest('une liste vide donne zéro', () => {\n  assert.strictEqual(countDone([]), 0);\n});",
+      "exercise": {
+        "prompt": "Remplace le corps de countDone par tasks.length. Quel test détecte l’erreur et pourquoi ?",
+        "answer": "Le premier échoue : la mauvaise fonction compte les deux tâches et renvoie 2, alors que 1 seule est terminée. Le test de liste vide reste vert ; il ne suffisait donc pas à prouver le filtrage."
+      },
+      "sources": [
+        {
+          "label": "Node.js · exécuter des tests",
+          "url": "https://nodejs.org/api/test.html",
+          "kind": "official"
+        },
+        {
+          "label": "Node.js · vérifier un résultat avec assert",
+          "url": "https://nodejs.org/api/assert.html",
+          "kind": "official"
+        },
+        {
+          "label": "Microsoft Learn · organiser des tests unitaires avec Arrange, Act, Assert",
+          "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices",
+          "kind": "official"
+        },
+        {
+          "label": "Playwright · tests de scénarios dans le navigateur",
+          "url": "https://playwright.dev/docs/intro",
+          "kind": "official"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp9', technology: 'tests',
-    section: {
-      title: 'Tests JavaScript · intégration HTTP, Axios et BDD dédiée',
-      body: 'Les tests de spécification du dépôt démarrent Express et un conteneur PostgreSQL oquiztest, appliquent les migrations, réinitialisent les tables entre les tests, puis ferment serveur et connexion. Le script npm run test:specs charge une configuration de test. Ce setup efface ses données : vérifier avant toute exécution qu’il cible exclusivement la base de test.',
-      bullets: [
-        'before prépare le contexte commun ; beforeEach prépare un état connu ; afterEach nettoie si nécessaire ; after libère les ressources. Attendre leur fin évite des processus ouverts.',
-        'Le requester Axios du cours utilise validateStatus: () => true : une réponse 404 ou 403 devient une valeur dont on vérifie le statut, pas un rejet de promesse.',
-        'Créer uniquement les fixtures utiles. Une BDD vidée entre les tests évite qu’un résultat dépende de l’ordre d’exécution.',
-        'Contrôler le statut, le corps et, pour une écriture, l’état en BDD. Pour une route protégée, couvrir jeton absent, rôle refusé et rôle autorisé.',
-        'Une attente fixe d’une seconde peut rendre le setup instable ; attendre réellement que PostgreSQL soit prêt. Ne pas paralléliser des tests qui tronquent les mêmes tables sans isolation adaptée.',
+    "cp": "cp9",
+    "technology": "tests",
+    "section": {
+      "title": "Tests 2 · attendre une promesse et remplacer une dépendance",
+      "body": "Une promesse représente un résultat qui arrivera plus tard. await attend ce résultat. Une dépendance est un outil appelé par la fonction, par exemple l’accès à une base. Pour vérifier la logique sans vraie base, on fournit une fonction de remplacement contrôlée : un double de test. L’injection consiste à passer explicitement cette dépendance en argument.",
+      "bullets": [
+        "Prérequis : Node 22+. Copie l’exemple dans service.test.mjs et lance node --test service.test.mjs. Deux tests doivent réussir.",
+        "Le service reçoit readTask, l’appelle avec l’identifiant demandé, puis renvoie le titre. Son double renvoie une tâche connue ; il ne vérifie pas une vraie base.",
+        "t.mock.fn crée le double et enregistre ses appels. Vérifier le résultat ET les arguments prouve ici que l’identifiant 7 a été transmis.",
+        "assert.throws vérifie une exception immédiate ; await assert.rejects vérifie une promesse rejetée. Oublier await peut terminer le test avant le résultat.",
+        "Un mock de méthode via t.mock.method est utile pour remplacer une méthode existante. Les doubles associés au contexte du test sont restaurés à sa fin."
       ],
-      code: `// Extrait à placer dans l’environnement de test du dépôt OQuiz
-it('retourne 404 pour un niveau absent', async () => {
-  const response = await adminRequester.get('/levels/99999');
-  assert.strictEqual(response.status, 404);
-});
-
-it('interdit la création à un author', async () => {
-  const response = await authorRequester.post('/levels', { name: 'Facile' });
-  assert.strictEqual(response.status, 403);
-});`,
-    },
+      "code": "import test from 'node:test';\nimport assert from 'node:assert/strict';\n\nconst makeService = readTask => async id => {\n  const task = await readTask(id);\n  if (!task) throw new Error('Tâche absente');\n  return task.title;\n};\n\ntest('renvoie le titre et transmet l’identifiant', async t => {\n  const readTask = t.mock.fn(async () => ({ id: 7, title: 'Lire' }));\n  const getTitle = makeService(readTask);\n  assert.strictEqual(await getTitle(7), 'Lire');\n  assert.deepStrictEqual(readTask.mock.calls[0].arguments, [7]);\n  assert.strictEqual(readTask.mock.callCount(), 1);\n});\n\ntest('refuse une tâche absente', async () => {\n  const getTitle = makeService(async () => null);\n  await assert.rejects(() => getTitle(99), /Tâche absente/);\n});",
+      "exercise": {
+        "prompt": "Le premier test prouve-t-il que PostgreSQL est correctement configuré ? Quelle partie prouve-t-il ?",
+        "answer": "Non : la base est remplacée. Il prouve que le service appelle la dépendance avec 7 et renvoie son titre. Un test d’intégration supplémentaire vérifierait la vraie connexion et les requêtes."
+      },
+      "sources": [
+        {
+          "label": "Node.js · exécuter des tests",
+          "url": "https://nodejs.org/api/test.html",
+          "kind": "official"
+        },
+        {
+          "label": "Node.js · vérifier un résultat avec assert",
+          "url": "https://nodejs.org/api/assert.html",
+          "kind": "official"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp9', technology: 'tests',
-    section: {
-      title: 'Tests JavaScript · Vitest, TDD et tests qui apportent une preuve',
-      body: 'Le client OQuiz utilise Vitest et un exercice TDD sur toReadableDate. Le cycle est Red (le nouveau test échoue pour la raison attendue), Green (implémentation suffisante), Refactor (amélioration avec les tests toujours verts). Les noms de fichiers unit/spec sont une convention du projet, pas une garantie du niveau du test.',
-      bullets: [
-        'expect(result).toBe(expected) compare une primitive ou une identité ; toEqual compare aussi la structure d’objets ; toThrow contrôle une exception.',
-        'npm run test dans le client lance Vitest ; npm run test -- --run effectue une exécution unique. Les commandes API sont npm run test:unit et npm run test:specs.',
-        'Pour les dates, préciser locale et fuseau ou construire une date locale maîtrisée. Un test doit éviter de dépendre du fuseau de la machine ou de l’heure courante.',
-        'Un test de non-régression reproduit un bug et vérifie le résultat attendu après correction. La couverture indique du code exécuté, sans garantir la pertinence des assertions.',
-        'Jest et Mocha apparaissent dans la comparaison « culture générale » du cours ; les exercices du dépôt utilisent node:test et Vitest.',
+    "cp": "cp9",
+    "technology": "tests",
+    "section": {
+      "title": "Tests 3 · tester une réponse HTTP et nettoyer le serveur",
+      "body": "HTTP est le protocole par lequel un client demande une ressource à un serveur. Une réponse contient un code de statut et souvent un corps. Ce test lance un vrai serveur local, envoie une requête, puis vérifie la réponse : il relie le serveur et le client HTTP. Toute sa petite liste de tâches est fournie.",
+      "bullets": [
+        "Prérequis : Node 22+. Copie dans http.test.mjs puis lance node --test http.test.mjs. Aucun package ni base externe nécessaire.",
+        "listen(0) demande un port libre ; once(..., \"listening\") attend réellement le démarrage. Le test ne dépend pas d’un délai arbitraire.",
+        "GET /tasks/1 doit renvoyer 200 et { id: 1, title: \"Lire\" }. Une autre adresse renvoie 404. fetch ne rejette pas seulement parce que le statut est 404 : il faut vérifier response.status.",
+        "t.after ferme le serveur à la fin du test. beforeEach peut réinitialiser les données avant chaque test ; after peut fermer une ressource commune.",
+        "Avec une vraie BDD, utiliser une base de test dédiée et un jeu d’essai connu. Ne pas laisser un test nettoyer des données de production.",
+        "Avec Axios, validateStatus: () => true rend tous les statuts HTTP vérifiables dans une réponse ; une panne réseau peut toujours rejeter la promesse."
       ],
-      code: `import { describe, it, expect } from 'vitest';
-import { toReadableDate } from './utils';
-
-describe('toReadableDate', () => {
-  it('formate une date locale en français', () => {
-    const date = new Date(2025, 11, 10, 12, 0);
-    expect(toReadableDate(date)).toBe('mercredi 10 décembre 2025');
-  });
-});`,
-    },
+      "code": "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { createServer } from 'node:http';\nimport { once } from 'node:events';\n\ntest('GET /tasks/1 renvoie une tâche', async t => {\n  const task = { id: 1, title: 'Lire' };\n  const server = createServer((req, res) => {\n    const found = req.method === 'GET' && req.url === '/tasks/1';\n    res.writeHead(found ? 200 : 404, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify(found ? task : { error: 'Absente' }));\n  });\n  t.after(() => new Promise((resolve, reject) => {\n    server.close(error => error ? reject(error) : resolve());\n  }));\n  server.listen(0, '127.0.0.1');\n  await once(server, 'listening');\n  const url = 'http://127.0.0.1:' + server.address().port;\n  const response = await fetch(url + '/tasks/1');\n  assert.strictEqual(response.status, 200);\n  assert.deepStrictEqual(await response.json(), task);\n});",
+      "exercise": {
+        "prompt": "Modifie la requête en /tasks/99. Quels résultats faut-il attendre ? Pourquoi une assertion sur le statut seul serait-elle incomplète ?",
+        "answer": "Attendre 404 et { error: \"Absente\" }. Le statut seul ne prouve pas le contenu de l’erreur ; une réponse pourrait avoir le bon statut et un corps incorrect."
+      },
+      "sources": [
+        {
+          "label": "Node.js · créer un serveur HTTP",
+          "url": "https://nodejs.org/api/http.html",
+          "kind": "official"
+        },
+        {
+          "label": "Node.js · exécuter des tests",
+          "url": "https://nodejs.org/api/test.html",
+          "kind": "official"
+        },
+        {
+          "label": "Node.js · vérifier un résultat avec assert",
+          "url": "https://nodejs.org/api/assert.html",
+          "kind": "official"
+        },
+        {
+          "label": "MDN · requête et réponse avec fetch",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch",
+          "kind": "official"
+        },
+        {
+          "label": "Axios · statuts HTTP et erreurs",
+          "url": "https://axios-http.com/docs/handling_errors",
+          "kind": "official"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp3', technology: 'backend',
-    section: {
-      title: 'Backend · Node, Express, routes et middlewares',
-      body: 'Node exécute JavaScript côté serveur. Express reçoit une requête HTTP et traverse une chaîne de middlewares dans l’ordre déclaré. Le router associe méthode et chemin à un traitement ; le contrôleur orchestre les données de la requête, la logique applicative et la réponse. L’API du cours utilise Express 5.',
-      bullets: [
-        'req.params contient les segments du chemin, req.query les paramètres d’URL et req.body le corps décodé. Ces valeurs viennent du client et sont à valider.',
-        'express.json() doit précéder les routes qui lisent un corps JSON ; cookieParser() précède les traitements qui lisent req.cookies.',
-        'next() passe au middleware suivant ; res.json()/res.send() envoie une réponse. Utiliser return pour éviter de continuer vers une seconde réponse.',
-        'Placer les routes avant le traitement 404 puis le middleware d’erreur à quatre arguments (err, req, res, next).',
-        'Express 5 transmet les rejets des promesses retournées par les handlers à la gestion d’erreur. Une tâche asynchrone détachée ou un callback doit transmettre son erreur explicitement.',
+    "cp": "cp9",
+    "technology": "tests",
+    "section": {
+      "title": "Tests 4 · Vitest et écrire un test avant le code",
+      "body": "Vitest est un autre outil pour lancer des tests JavaScript, avec ses assertions expect. Le TDD est une façon de développer : écrire d’abord un test qui révèle le besoin, coder pour le faire réussir, puis améliorer le code en gardant les tests verts. On veut ici obtenir les titres des tâches encore à faire.",
+      "bullets": [
+        "Prérequis : Node 22+ et npm. Dans un dossier vide : npm init -y, puis npm install -D vitest@4. Enregistre le JavaScript sous titres.test.mjs ; lance npx vitest run.",
+        "Red : commence avec getPendingTitles = tasks => [] ; le test échoue car il attend [\"Marcher\"]. Green : ajoute le filtrage et la transformation fournis.",
+        "Refactor : améliore la lisibilité sans changer le résultat. Ne remplace pas l’attendu par la valeur réellement obtenue pour rendre un test vert.",
+        "toBe compare une valeur simple ou une identité ; toEqual compare une structure ; toThrow vérifie une exception. Le résultat est ici un tableau, donc toEqual convient.",
+        "Un test de non-régression garde la reproduction d’un bug corrigé. La couverture mesure les lignes exécutées, pas la qualité du résultat attendu."
       ],
-      code: `app.use(express.json());
-app.use('/api', router);
-
-router.get('/levels/:id', checkRoles(['admin']), async (req, res) => {
-  const id = await z.coerce.number().int().min(1).parseAsync(req.params.id);
-  const level = await prisma.level.findUnique({ where: { id } });
-  if (!level) throw new NotFoundError('Niveau absent');
-  return res.json(level);
-});
-
-app.use(notFoundMW);
-app.use(globalErrorHandler);`,
-    },
+      "code": "import { test, expect } from 'vitest';\n\nconst getPendingTitles = tasks => tasks\n  .filter(task => !task.done)\n  .map(task => task.title);\n\ntest('garde les titres des tâches à faire', () => {\n  const tasks = [\n    { title: 'Lire', done: true },\n    { title: 'Marcher', done: false },\n  ];\n  expect(getPendingTitles(tasks)).toEqual(['Marcher']);\n});",
+      "exercise": {
+        "prompt": "Ajoute le cas de liste vide. Quelle assertion écris-tu et quelle limite de ton premier test couvre-t-elle ?",
+        "answer": "expect(getPendingTitles([])).toEqual([]). Ce deuxième cas vérifie que l’absence de données produit une liste vide sans erreur ; le premier vérifie le filtrage et les titres."
+      },
+      "sources": [
+        {
+          "label": "Vitest · installer et lancer des tests",
+          "url": "https://vitest.dev/guide/",
+          "kind": "official"
+        },
+        {
+          "label": "Vitest · comparer les résultats",
+          "url": "https://vitest.dev/api/expect.html",
+          "kind": "official"
+        },
+        {
+          "label": "Microsoft Learn · organiser des tests unitaires avec Arrange, Act, Assert",
+          "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices",
+          "kind": "official"
+        },
+        {
+          "label": "Microsoft Learn · cycle Red, Green, Refactor",
+          "url": "https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions-1/contact-manager/iteration-6-use-test-driven-development-cs",
+          "kind": "official"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp3', technology: 'backend',
-    section: {
-      title: 'Backend · Zod, codes HTTP et contrôle d’accès',
-      body: 'TypeScript vérifie le code avant son exécution ; il ne valide pas le JSON reçu. Zod vérifie les données au moment de la requête. L’authentification vérifie l’identité ; l’autorisation contrôle une permission, un rôle ou la propriété de la ressource. Les exemples du cours combinent Zod, argon2, JWT et middlewares checkRoles.',
-      bullets: [
-        'parse/parseAsync renvoie les données validées ou lève une ZodError ; safeParse renvoie un résultat success/data ou success/error. Exploiter les données validées.',
-        'Dans l’API du cours, la validation Zod aboutit à 422 ; 401 signale une authentification absente ou invalide ; 403 une permission refusée ; 404 une ressource absente ; 409 un conflit.',
-        'argon2.hash stocke un hash du mot de passe ; argon2.verify compare une tentative au hash. Ne renvoyer ni mot de passe ni hash au client.',
-        'jwt.verify contrôle la signature et l’expiration ; jwt.decode lit le contenu sans authentifier le jeton. Un JWT signé reste lisible, donc ne contient pas de secret.',
-        'Les cookies HttpOnly empêchent leur lecture par JavaScript ; Secure impose HTTPS. Les cookies envoyés automatiquement exigent une défense CSRF adaptée. CORS seul n’est ni authentification ni protection CSRF complète.',
-        'Un rôle autorisé ne suffit pas toujours : vérifier aussi que la ressource appartient à l’utilisateur si la règle métier l’exige.',
+    "cp": "cp3",
+    "technology": "backend",
+    "section": {
+      "title": "Backend 1 · une requête, une route et une réponse",
+      "body": "Le backend est le programme côté serveur. Une API offre des points d’accès pour demander ou modifier des données. Node exécute JavaScript ; Express facilite la création d’une API HTTP. Une route associe une méthode, comme GET, à un chemin, comme /tasks/1. Ce serveur lit deux tâches stockées en mémoire.",
+      "bullets": [
+        "Prérequis : Node 22+ et npm. Dans un dossier vide : npm init -y puis npm install express@5. Enregistre le code sous api.mjs et lance node api.mjs.",
+        "req représente la requête reçue, res permet d’envoyer la réponse. Dans /tasks/:id, :id est une partie variable du chemin ; req.params.id est sa valeur texte.",
+        "GET lit une ressource. POST sert notamment à créer ; PUT remplace ; PATCH modifie partiellement ; DELETE supprime selon le contrat de l’API.",
+        "Résultat attendu : ouvrir http://127.0.0.1:3000/tasks/1 renvoie { id: 1, title: \"Lire\" }. /tasks/99 renvoie 404 ; /tasks/abc renvoie 400.",
+        "Les tâches sont dans un tableau : arrêter le serveur fait perdre ses changements. La persistance en base est une étape distincte."
       ],
-      code: `const schema = z.object({ name: z.string().trim().min(1) });
-const data = await schema.parseAsync(req.body);
-// data.name est vérifié à l’exécution
-
-const payload = jwt.verify(token, JWT_SECRET);
-// Vérifier aussi la forme du payload et les options attendues
-// avant d’utiliser userId ou role pour autoriser l’accès.`,
-    },
+      "code": "import express from 'express';\nconst app = express();\nconst tasks = [\n  { id: 1, title: 'Lire' },\n  { id: 2, title: 'Marcher' },\n];\n\napp.get('/tasks/:id', (req, res) => {\n  const id = Number(req.params.id);\n  if (!Number.isInteger(id) || id < 1) {\n    return res.status(400).json({ error: 'Identifiant invalide' });\n  }\n  const task = tasks.find(item => item.id === id);\n  if (!task) return res.status(404).json({ error: 'Tâche absente' });\n  return res.json(task);\n});\napp.listen(3000, '127.0.0.1');",
+      "exercise": {
+        "prompt": "Pour GET /tasks/2, quelle méthode, quelle valeur de req.params.id et quelle réponse attends-tu ?",
+        "answer": "La méthode est GET. req.params.id vaut la chaîne \"2\" ; Number la convertit en 2. La réponse est 200 avec { id: 2, title: \"Marcher\" }."
+      },
+      "sources": [
+        {
+          "label": "Express 5 · premier serveur",
+          "url": "https://expressjs.com/en/starter/hello-world/",
+          "kind": "official"
+        },
+        {
+          "label": "RFC 9110 · codes de réponse HTTP",
+          "url": "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes",
+          "kind": "standard"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp8', technology: 'backend',
-    section: {
-      title: 'Backend · Prisma, filtre, relation et pagination',
-      body: 'Prisma fournit un client typé qui transforme les opérations sur les modèles en requêtes vers la BDD. Le schéma OQuiz relie notamment User, Quiz, Question, Level et Tag. Savoir lire la requête et expliquer son effet SQL est plus utile que réciter une méthode.',
-      bullets: [
-        'findMany renvoie un tableau, éventuellement vide ; findUnique cherche une clé unique et renvoie un enregistrement ou null ; create/update/delete écrivent des données.',
-        'where filtre, orderBy trie, select choisit les champs, include charge une relation. Par défaut, les relations ne sont pas toutes renvoyées automatiquement.',
-        'skip/take expriment une pagination par décalage ; utiliser un tri déterministe. La pagination par curseur est adaptée aux parcours volumineux, avec une clé unique et un ordre cohérent.',
-        'Le filtre dépend des règles métier : where: { author_id: userId } limite les quiz de l’auteur. Ne pas laisser le client choisir arbitrairement un propriétaire à autoriser.',
-        'Prisma évite de construire soi-même le SQL des opérations courantes. Une requête raw construite par concaténation de saisies peut réintroduire une injection ; un sanitizer HTML ne la bloque pas.',
+    "cp": "cp3",
+    "technology": "backend",
+    "section": {
+      "title": "Backend 2 · comprendre la chaîne de middlewares",
+      "body": "Un middleware est une fonction exécutée pendant le traitement d’une requête. Il peut lire les données, en ajouter, répondre ou transmettre le travail au suivant avec next(). L’ordre est donc utile : décoder le JSON avant de le lire, placer les routes avant la réponse 404 et traiter les erreurs à la fin.",
+      "bullets": [
+        "Prérequis : Node 22+, npm init -y et npm install express@5 dans un dossier vide. Copie sous chaine.mjs et lance node chaine.mjs.",
+        "express.json décode un corps JSON. Un Content-Type: application/json annonce ce format. req.body, req.params et req.query viennent du client et restent à valider.",
+        "res.json envoie la réponse ; return quitte la fonction pour éviter d’envoyer une deuxième réponse. Un middleware sans réponse ni next laisse la requête en attente.",
+        "Le middleware d’erreur a quatre paramètres, dont error en premier. En Express 5, le rejet de la promesse retournée par un handler async lui est transmis.",
+        "Résultat attendu : POST /echo renvoie le corps fourni ; GET /fail renvoie 500 et une erreur générique. Les détails techniques restent dans les logs du serveur."
       ],
-      code: `const quizzes = await prisma.quiz.findMany({
-  where: { author_id: userId },
-  orderBy: { id: 'asc' },
-  skip: (page - 1) * pageSize,
-  take: pageSize,
-  include: { author: { select: { id: true, firstname: true } } },
-});
-// Valider page et borner pageSize avant cette requête.`,
-    },
+      "code": "import express from 'express';\nconst app = express();\napp.use(express.json());\napp.use((req, _res, next) => {\n  console.log(req.method, req.path);\n  next();\n});\napp.post('/echo', (req, res) => res.json(req.body));\napp.get('/fail', async () => { throw new Error('Erreur de démonstration'); });\napp.use((_req, res) => res.status(404).json({ error: 'Route absente' }));\napp.use((error, _req, res, _next) => {\n  console.error(error.message);\n  const status = error.status === 400 ? 400 : 500;\n  res.status(status).json({ error: status === 400 ? 'JSON invalide' : 'Erreur serveur' });\n});\napp.listen(3001, '127.0.0.1');\n// Autre terminal :\n// curl -X POST http://127.0.0.1:3001/echo -H 'Content-Type: application/json' -d '{\"title\":\"Lire\"}'\n// curl -i http://127.0.0.1:3001/fail",
+      "exercise": {
+        "prompt": "Que se passe-t-il si la réponse 404 est placée avant les routes et n’appelle pas next() ?",
+        "answer": "Elle répond à toutes les requêtes qui la traversent ; les routes suivantes ne sont jamais atteintes. Il faut chercher une route avant de conclure qu’elle est absente."
+      },
+      "sources": [
+        {
+          "label": "Express 5 · chaîne de middlewares",
+          "url": "https://expressjs.com/en/guide/using-middleware/",
+          "kind": "official"
+        },
+        {
+          "label": "Express 5 · traitement des erreurs",
+          "url": "https://expressjs.com/en/guide/error-handling/",
+          "kind": "official"
+        },
+        {
+          "label": "RFC 9110 · codes de réponse HTTP",
+          "url": "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes",
+          "kind": "standard"
+        }
+      ]
+    }
   },
   {
-    cp: 'cp8', technology: 'backend',
-    section: {
-      title: 'Backend · migrations, contraintes et transactions',
-      body: 'Le schéma décrit la structure désirée ; les migrations versionnent les changements SQL ; le client généré fournit l’API typée. Le dépôt utilise Prisma 6.19 : les commandes et chemins se lisent dans ses scripts npm et sa configuration. Une modification du schéma ne modifie pas automatiquement une base déjà déployée.',
-      bullets: [
-        'prisma migrate dev prépare et applique les migrations en développement ; prisma migrate deploy applique les migrations existantes dans un environnement de déploiement.',
-        'prisma generate produit le client à partir du schéma ; cette génération n’applique pas de changement à la BDD. Le seed ajoute un jeu de données.',
-        'Une vérification « le nom existe-t-il ? » améliore le message, mais deux requêtes concurrentes peuvent passer ensemble. Une contrainte UNIQUE en base reste nécessaire.',
-        'Une transaction regroupe des écritures qui doivent toutes réussir ou être annulées. Elle évite un état partiel quand une étape échoue.',
-        'Les resets et les TRUNCATE des tests effacent des données : ils appartiennent à une base dédiée et contrôlée. Lire DATABASE_URL et le contexte du script avant de les exécuter.',
+    "cp": "cp3",
+    "technology": "backend",
+    "section": {
+      "title": "Backend 3 · valider le JSON reçu avec Zod",
+      "body": "Valider signifie vérifier qu’une donnée respecte une forme et des règles. TypeScript vérifie ton code avant l’exécution ; il n’empêche pas un client d’envoyer un mauvais JSON. Zod décrit les règles et les applique au moment où la requête arrive. Cette API accepte un titre non vide et refuse un nombre à sa place.",
+      "bullets": [
+        "Prérequis : Node 22+, npm init -y, puis npm install express@5 zod@4. Copie sous validation.mjs et lance node validation.mjs.",
+        "z.object décrit un objet ; z.string un texte ; trim retire les espaces autour ; min(1) exige au moins un caractère après ce nettoyage.",
+        "safeParse renvoie success: true et data, ou success: false et error. parse renvoie les données validées ou lève une erreur ; leurs variantes Async attendent les règles asynchrones.",
+        "Résultat attendu : {\"title\":\"  Lire  \"} produit 201 avec { id: 1, title: \"Lire\" }. {\"title\":123} produit 422 et ne crée rien.",
+        "201 signifie qu’une ressource a été créée. 422 convient à un contenu compris mais invalide ; 400 à une requête incorrecte. Le choix précis doit rester cohérent dans le contrat API."
       ],
-      code: `// Exemple : ces deux écritures sont validées ensemble
-await prisma.$transaction([
-  prisma.level.create({ data: { name: 'Facile' } }),
-  prisma.level.create({ data: { name: 'Difficile' } }),
-]);
-
-// Scripts du dépôt API, selon l’environnement
-// npm run db:generate       -> génère le client
-// npm run db:migrate:dev    -> développement
-// npm run db:migrate:deploy -> migrations existantes`,
-    },
+      "code": "import express from 'express';\nimport { z } from 'zod';\nconst app = express();\nconst tasks = [];\nconst taskInput = z.object({ title: z.string().trim().min(1) });\napp.use(express.json());\n\napp.post('/tasks', (req, res) => {\n  const result = taskInput.safeParse(req.body);\n  if (!result.success) {\n    return res.status(422).json({ error: 'Un titre texte non vide est requis' });\n  }\n  const task = { id: tasks.length + 1, title: result.data.title };\n  tasks.push(task);\n  return res.status(201).json(task);\n});\napp.listen(3002, '127.0.0.1');\n// curl -X POST http://127.0.0.1:3002/tasks -H 'Content-Type: application/json' -d '{\"title\":\"  Lire  \"}'\n// curl -X POST http://127.0.0.1:3002/tasks -H 'Content-Type: application/json' -d '{\"title\":123}'",
+      "exercise": {
+        "prompt": "Pour {\"title\":\"   \"}, safeParse réussit-il ? Explique dans quel ordre les règles agissent.",
+        "answer": "Non : trim transforme les espaces en chaîne vide, puis min(1) échoue. La route renvoie 422 sans ajouter de tâche, car elle utilise uniquement result.data après une validation réussie."
+      },
+      "sources": [
+        {
+          "label": "Zod · validation des données à l’exécution",
+          "url": "https://zod.dev/basics",
+          "kind": "official"
+        },
+        {
+          "label": "RFC 9110 · codes de réponse HTTP",
+          "url": "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes",
+          "kind": "standard"
+        }
+      ]
+    }
   },
+  {
+    "cp": "cp3",
+    "technology": "backend",
+    "section": {
+      "title": "Backend 4 · identité, permissions et jeton signé",
+      "body": "L’authentification vérifie qui fait la demande ; l’autorisation vérifie ce que cette personne peut faire. Un jeton est une preuve présentée au serveur. Un JWT signé contient des informations lisibles et une signature permettant de détecter une modification. L’exemple sépare une identité vérifiée et une règle simple : seul le propriétaire peut modifier sa tâche.",
+      "bullets": [
+        "Prérequis : Node 22+, npm init -y puis npm install jsonwebtoken@9. Copie sous permissions.mjs et lance node permissions.mjs. La clé fournie sert uniquement à cette démonstration locale.",
+        "sign crée un jeton ; verify vérifie sa signature et son expiration avec les options attendues. decode lit seulement le contenu : il ne prouve pas l’identité.",
+        "Le serveur choisit la clé, les algorithmes acceptés et les règles de permission. Ne pas faire confiance à un ownerId ou un rôle simplement envoyé dans le corps de la requête.",
+        "Sans identité valable, une route protégée répond généralement 401 ; avec une identité valable mais sans permission, 403. Un 401 comporte aussi le défi WWW-Authenticate approprié.",
+        "Pour un mot de passe, conserver un hash adapté comme Argon2id et vérifier la tentative ; ne pas stocker le texte ni renvoyer le hash au client.",
+        "Un cookie HttpOnly bloque sa lecture par JavaScript ; Secure exige HTTPS. Les cookies envoyés automatiquement nécessitent aussi une protection contre les requêtes forgées (CSRF).",
+        "Résultat attendu : utilisateur 7 peut modifier la tâche dont ownerId vaut 7, mais pas celle dont ownerId vaut 8."
+      ],
+      "code": "import jwt from 'jsonwebtoken';\nconst secret = 'cle-fictive-utilisee-seulement-dans-cet-atelier';\nconst token = jwt.sign({ userId: 7 }, secret, {\n  algorithm: 'HS256', expiresIn: '5m',\n});\nconst identity = jwt.verify(token, secret, { algorithms: ['HS256'] });\nif (typeof identity !== 'object' || !Number.isInteger(identity.userId)) {\n  throw new Error('Identité invalide');\n}\nconst canEdit = task => task.ownerId === identity.userId;\nconsole.log(canEdit({ id: 1, ownerId: 7 })); // true\nconsole.log(canEdit({ id: 2, ownerId: 8 })); // false",
+      "exercise": {
+        "prompt": "Un client envoie { ownerId: 7 } dans sa demande pour une tâche appartenant à 8. Cela lui donne-t-il le droit de la modifier ?",
+        "answer": "Non : le serveur doit lire le propriétaire réel de la tâche dans ses données fiables et comparer avec l’identité vérifiée. Un propriétaire déclaré par le client ne prouve aucun droit."
+      },
+      "sources": [
+        {
+          "label": "OWASP · vérifier les permissions",
+          "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+          "kind": "official"
+        },
+        {
+          "label": "jsonwebtoken · signature, verify et decode",
+          "url": "https://github.com/auth0/node-jsonwebtoken",
+          "kind": "official"
+        },
+        {
+          "label": "OWASP · stockage des mots de passe",
+          "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+          "kind": "official"
+        },
+        {
+          "label": "MDN · propriétés d’un cookie HTTP",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+          "kind": "official"
+        },
+        {
+          "label": "RFC 9110 · codes de réponse HTTP",
+          "url": "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes",
+          "kind": "standard"
+        }
+      ]
+    }
+  },
+  {
+    "cp": "cp8",
+    "technology": "backend",
+    "section": {
+      "title": "Backend 5 · lire une base avec Prisma : atelier autonome",
+      "body": "Une base de données conserve des informations après l’arrêt du serveur. Un ORM est un outil qui permet de manipuler ces données avec des objets et des méthodes ; Prisma en est un. Le schéma décrit les tables et leurs relations. Cet atelier utilise SQLite, un fichier local, et Prisma 6.19 explicitement : il enseigne l’API findMany sans nécessiter un serveur de BDD.",
+      "bullets": [
+        "Prérequis : Node 22+, npm et un dossier vide. L’exemple contient les commandes, le schéma et le programme. Les versions Prisma sont fixées car les nouvelles versions peuvent avoir une configuration différente.",
+        "Task est une tâche avec id, title, done ; Board est une liste de tâches. boardId relie une tâche à sa liste. @id identifie une ligne ; @unique interdit les doublons ; @default donne une valeur initiale.",
+        "findMany renvoie un tableau, éventuellement vide ; findUnique cherche une valeur unique et renvoie une ligne ou null. create ajoute, update modifie, delete supprime.",
+        "Le fichier SQLite atelier.db est créé vide avec touch, puis la migration y crée les tables. Ces commandes de terminal sont destinées à macOS/Linux ; sous Windows, créer le fichier vide avec l’outil équivalent.",
+        "where filtre ; orderBy trie ; skip ignore des lignes ; take limite leur nombre ; select choisit les champs ; include ajoute une relation. Ne pas utiliser select et include au même niveau.",
+        "Résultat attendu : seule Lire est encore à faire. La sortie JSON vaut [{\"title\":\"Lire\",\"board\":{\"name\":\"Maison\"}}]. Le deuxième titre est terminé et donc exclu."
+      ],
+      "code": "# Terminal : crée un dossier vide puis travaille dedans\nmkdir atelier-prisma\ncd atelier-prisma\nnpm init -y\nnpm install -D prisma@6.19.0\nnpm install @prisma/client@6.19.0\nmkdir prisma\n\n# Fichier prisma/schema.prisma\n# Copier ce contenu dans le fichier, sans les lignes du terminal.\ngenerator client {\n  provider = \"prisma-client-js\"\n}\ndatasource db {\n  provider = \"sqlite\"\n  url      = \"file:./atelier.db\"\n}\nmodel Board {\n  id    Int    @id @default(autoincrement())\n  name  String @unique\n  tasks Task[]\n}\nmodel Task {\n  id      Int     @id @default(autoincrement())\n  title   String\n  done    Boolean @default(false)\n  boardId Int\n  board   Board   @relation(fields: [boardId], references: [id])\n}\n\n# Terminal : crée les tables et le client\ntouch prisma/atelier.db\nnpx prisma migrate dev --name init\nnpx prisma generate\n\n# Fichier lecture.mjs\nimport { PrismaClient } from '@prisma/client';\nconst prisma = new PrismaClient();\ntry {\n  const board = await prisma.board.upsert({\n    where: { name: 'Maison' }, update: {}, create: { name: 'Maison' },\n  });\n  for (const [id, title, done] of [[1, 'Lire', false], [2, 'Marcher', true]]) {\n    const data = { title, done, boardId: board.id };\n    await prisma.task.upsert({ where: { id }, update: data, create: { id, ...data } });\n  }\n  const tasks = await prisma.task.findMany({\n    where: { done: false }, orderBy: { id: 'asc' }, skip: 0, take: 1,\n    select: { title: true, board: { select: { name: true } } },\n  });\n  console.log(JSON.stringify(tasks));\n} finally {\n  await prisma.$disconnect();\n}\n\n# Terminal : exécute le programme\nnode lecture.mjs",
+      "exercise": {
+        "prompt": "Avec les deux tâches fournies, remplace where: { done: false } par where: { done: true }. Quel résultat obtiens-tu ?",
+        "answer": "La sortie devient [{\"title\":\"Marcher\",\"board\":{\"name\":\"Maison\"}}]. where choisit la tâche terminée ; select conserve son titre et le nom de sa liste, sans renvoyer les autres champs."
+      },
+      "sources": [
+        {
+          "label": "Prisma ORM 6 · méthodes du client",
+          "url": "https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference",
+          "kind": "official"
+        },
+        {
+          "label": "Prisma ORM 6 · lire les relations",
+          "url": "https://www.prisma.io/docs/orm/v6/prisma-client/queries/relation-queries",
+          "kind": "official"
+        },
+        {
+          "label": "Prisma ORM 6 · générer un client",
+          "url": "https://www.prisma.io/docs/orm/v6/prisma-schema/overview/generators",
+          "kind": "official"
+        },
+        {
+          "label": "Prisma ORM 6 · configurer la source de données",
+          "url": "https://www.prisma.io/docs/orm/v6/prisma-schema/overview/data-sources",
+          "kind": "official"
+        }
+      ]
+    }
+  },
+  {
+    "cp": "cp8",
+    "technology": "backend",
+    "section": {
+      "title": "Backend 6 · migrations, unicité et transaction",
+      "body": "Une migration est un changement versionné de la structure de la BDD, comme ajouter une colonne. Générer le client est différent : cela fabrique le code des méthodes disponibles. Une transaction regroupe des opérations qui doivent réussir ensemble ou être annulées ensemble. Le scénario ci-dessous explique ce que ces outils protègent, sans dépendre d’une application existante.",
+      "bullets": [
+        "Dans Prisma 6, migrate dev crée et applique des migrations pendant le développement ; migrate deploy applique les migrations déjà écrites. generate produit le client sans créer les tables.",
+        "Un seed est un jeu de données initial. Un test peut avoir ses propres données connues, dans une base dédiée. Reset et TRUNCATE effacent des données et n’ont pas leur place dans une base à conserver.",
+        "Une contrainte UNIQUE en BDD reste nécessaire : deux demandes simultanées peuvent toutes deux croire qu’un nom est libre. Une simple recherche préalable ne protège pas de cette concurrence.",
+        "Dans une transaction, l’échec d’une écriture annule les autres écritures de ce groupe. Cela empêche une mise à jour partielle ; il faut encore choisir une isolation adaptée aux règles concurrentes.",
+        "Une injection SQL se produit lorsqu’une saisie change le sens d’une requête construite par concaténation. Utiliser des paramètres et les API adaptées ; nettoyer du HTML ne protège pas du SQL.",
+        "Le schéma et le déroulé ci-dessous sont un exercice de raisonnement : ils ne constituent pas un script prêt à exécuter. L’atelier précédent fournit un environnement Prisma complet pour pratiquer."
+      ],
+      "code": "État initial de deux lignes Account :\n  { id: 1, balance: 100 }\n  { id: 2, balance: 20 }\n\nTransaction « transférer 10 » :\n  1. Modifier le solde du compte 1 : 100 -> 90.\n  2. Modifier le solde du compte 2 : 20 -> 30.\n  3. Valider le groupe seulement si les deux écritures réussissent.\n\nSi les deux réussissent : soldes 90 et 30.\nSi la deuxième échoue : soldes 100 et 20.\nSans transaction, la première écriture pourrait rester seule.",
+      "exercise": {
+        "prompt": "Un transfert retire 10 au premier compte, puis l’ajout au deuxième échoue. Quels soldes restent avec une transaction ? Pourquoi ?",
+        "answer": "100 et 20 : le groupe est annulé, y compris le retrait pourtant déjà exécuté. La transaction protège l’atomicité : aucune partie du transfert ne reste seule. Elle ne vérifie pas automatiquement les autres règles, comme un solde suffisant."
+      },
+      "sources": [
+        {
+          "label": "Prisma ORM 6 · migrations en développement et déploiement",
+          "url": "https://www.prisma.io/docs/orm/v6/prisma-migrate/workflows/development-and-production",
+          "kind": "official"
+        },
+        {
+          "label": "Prisma ORM 6 · générer un client",
+          "url": "https://www.prisma.io/docs/orm/v6/prisma-schema/overview/generators",
+          "kind": "official"
+        },
+        {
+          "label": "Prisma ORM 6 · transactions",
+          "url": "https://www.prisma.io/docs/orm/v6/prisma-client/queries/transactions",
+          "kind": "official"
+        },
+        {
+          "label": "OWASP · prévention des injections SQL",
+          "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html",
+          "kind": "official"
+        }
+      ]
+    }
+  }
 ];
 
 export const courseCards = [
-  { id: 'course-docker-01', cp: 'cp1', technology: 'docker', question: 'Docker : quelle différence entre une image et un conteneur ?', answer: 'Une image est le modèle construit ; un conteneur est une instance créée à partir de ce modèle, avec son processus et sa couche modifiable.', detail: 'Une même image peut lancer plusieurs conteneurs. Supprimer un conteneur ne supprime pas l’image.', tags: ['Docker', 'Image'] },
-  { id: 'course-docker-02', cp: 'cp1', technology: 'docker', question: 'Quelle différence entre docker run et docker start ?', answer: 'run crée et démarre un nouveau conteneur ; start démarre un conteneur existant qui est arrêté.', detail: 'Pour reconstruire l’image, utiliser docker build ; redémarrer un conteneur ne reconstruit pas son image.', tags: ['Docker', 'CLI'] },
-  { id: 'course-docker-03', cp: 'cp1', technology: 'docker', question: 'Une API Docker s’arrête au démarrage : quelles commandes lis-tu en premier ?', answer: 'docker ps -a pour le statut et le code de sortie, puis docker logs du conteneur ; avec Compose : docker compose ps puis docker compose logs api.', detail: 'Vérifier ensuite la commande de démarrage, les variables, le port et la disponibilité de la BDD.', tags: ['Docker', 'Diagnostic'] },
-  { id: 'course-docker-04', cp: 'cp1', technology: 'docker', question: 'Que signifie -p 5433:5432 et est-ce la même chose que EXPOSE ?', answer: 'Le port 5433 de l’hôte est lié au port 5432 du conteneur. EXPOSE documente un port et ne le publie pas à lui seul.', detail: 'Un client sur l’hôte se connecte à localhost:5433. Un autre service du même réseau utilise le nom du service et 5432.', tags: ['Docker', 'Réseau'] },
-  { id: 'course-docker-05', cp: 'cp1', technology: 'docker', question: 'Dockerfile : quelle différence entre RUN et CMD ?', answer: 'RUN exécute une commande pendant la construction de l’image ; CMD définit la commande par défaut exécutée au démarrage du conteneur.', detail: 'RUN npm ci installe les dépendances au build ; CMD ["node", "dist/index.js"] démarre l’application.', tags: ['Docker', 'Dockerfile'] },
-  { id: 'course-docker-06', cp: 'cp1', technology: 'docker', question: 'Pourquoi copier package*.json puis installer avant de copier les sources ?', answer: 'Pour réutiliser le cache de l’installation des dépendances quand seuls les fichiers de code changent.', detail: 'Si package.json ou le lockfile change, la couche d’installation doit être reconstruite.', tags: ['Docker', 'Cache'] },
-  { id: 'course-docker-07', cp: 'cp1', technology: 'docker', question: 'Quel est le rôle de .dockerignore ?', answer: 'Il exclut des fichiers du contexte de build, par exemple node_modules, .git et .env.', detail: 'Cela réduit les fichiers envoyés au build et évite d’ajouter des dépendances locales ou secrets par COPY.', tags: ['Docker', 'Dockerfile'] },
-  { id: 'course-docker-08', cp: 'cp1', technology: 'docker', question: 'ARG, variable au démarrage et VITE_API_BASE_URL : quand servent-ils ?', answer: 'ARG fournit une valeur au build ; une variable environment de Compose configure le conteneur à l’exécution ; VITE_API_BASE_URL est intégrée au code client lors du build Vite.', detail: 'Modifier seulement la variable du conteneur Nginx ne modifie pas un bundle client déjà construit. Une variable VITE_* est publique.', tags: ['Docker', 'Vite'] },
-  { id: 'course-docker-09', cp: 'cp10', technology: 'docker', question: 'Pourquoi une API conteneurisée ne doit-elle pas joindre PostgreSQL sur localhost ?', answer: 'Dans l’API, localhost désigne ce conteneur. Il faut joindre le nom du service BDD sur le réseau Compose, par exemple database:5432.', detail: 'Le nom interne Docker n’est généralement pas accessible depuis le navigateur de l’utilisateur.', tags: ['Docker', 'Compose'] },
-  { id: 'course-docker-10', cp: 'cp10', technology: 'docker', question: 'Docker : quelle différence entre un volume nommé et un bind mount ?', answer: 'Le volume nommé est géré par Docker, adapté aux données persistantes ; le bind mount lie directement un chemin de l’hôte au conteneur.', detail: 'Le cours utilise des volumes pour PostgreSQL et des bind mounts pour le code en développement.', tags: ['Docker', 'Volumes'] },
-  { id: 'course-docker-11', cp: 'cp10', technology: 'docker', question: 'docker compose down supprime-t-il les données du volume PostgreSQL ?', answer: 'Les volumes nommés sont normalement conservés. down -v supprime aussi les volumes du projet et donc leurs données.', detail: 'Un fichier situé uniquement dans la couche du conteneur supprimé est perdu. Toujours identifier où la BDD stocke ses fichiers.', tags: ['Docker', 'Persistance'] },
-  { id: 'course-docker-12', cp: 'cp10', technology: 'docker', question: 'depends_on: [database] garantit-il que PostgreSQL est prêt ?', answer: 'Non. Il impose un ordre de démarrage. Un healthcheck et condition: service_healthy attendent la disponibilité initiale de la BDD.', detail: 'Une BDD prête peut encore nécessiter des migrations ; prévoir aussi les erreurs de connexion en cours d’exécution.', tags: ['Docker', 'Healthcheck'] },
-
-  { id: 'course-tests-01', cp: 'cp9', technology: 'tests', question: 'Quels outils de tests sont réellement pratiqués dans le dépôt OQuiz ?', answer: 'Côté API : node:test et node:assert. Côté client : Vitest. Jest et Mocha sont cités pour comparaison dans le cours.', detail: 'SC02E03, api/package.json et client/package.json permettent de justifier ce choix.', tags: ['Tests JS', 'node:test', 'Vitest'] },
-  { id: 'course-tests-02', cp: 'cp9', technology: 'tests', question: 'Quelle différence entre test runner et bibliothèque d’assertions ?', answer: 'Le runner découvre et exécute les tests ; les assertions vérifient les valeurs et comportements attendus.', detail: 'node:test orchestre les tests ; node:assert fournit strictEqual, deepStrictEqual, throws et rejects.', tags: ['Tests JS', 'node:test'] },
-  { id: 'course-tests-03', cp: 'cp9', technology: 'tests', question: 'Que signifie AAA dans un test JavaScript ?', answer: 'Arrange : préparer les entrées et le contexte. Act : exécuter le code testé. Assert : vérifier le résultat attendu.', detail: 'Un test nommé « refuse un mot de passe sans majuscule » prépare une telle valeur puis attend false.', tags: ['Tests JS', 'AAA'] },
-  { id: 'course-tests-04', cp: 'cp9', technology: 'tests', question: 'Quelle différence entre un test unitaire, d’intégration et E2E ?', answer: 'Unitaire : une unité isolée. Intégration : plusieurs composants reliés. E2E : un scénario utilisateur complet sur le système.', detail: 'Valider isValidPassword est unitaire ; appeler une route avec vraie BDD est une intégration ; se connecter via le navigateur est un E2E.', tags: ['Tests JS', 'Niveaux'] },
-  { id: 'course-tests-05', cp: 'cp9', technology: 'tests', question: 'Quand choisir assert.strictEqual plutôt que assert.deepStrictEqual ?', answer: 'strictEqual compare une primitive ou l’identité d’un objet ; deepStrictEqual compare récursivement la structure des objets et tableaux.', detail: 'Deux objets { id: 7 } distincts ne sont pas identiques, mais ont la même structure.', tags: ['Tests JS', 'node:assert'] },
-  { id: 'course-tests-06', cp: 'cp9', technology: 'tests', question: 'Comment tester une exception synchrone et un rejet asynchrone ?', answer: 'assert.throws(() => operation()) pour une exception synchrone ; await assert.rejects(() => operationAsync()) pour une promesse rejetée.', detail: 'Passer une fonction pour ne pas lancer l’opération avant que l’assertion l’observe.', tags: ['Tests JS', 'Asynchrone'] },
-  { id: 'course-tests-07', cp: 'cp9', technology: 'tests', question: 'Pourquoi un test async sans await peut-il donner une fausse confiance ?', answer: 'Le runner peut considérer le test terminé avant que la promesse et ses assertions finissent.', detail: 'Déclarer un callback async et await les appels ou retourner la promesse attendue.', tags: ['Tests JS', 'Asynchrone'] },
-  { id: 'course-tests-08', cp: 'cp9', technology: 'tests', question: 'Comment un mock aide-t-il à tester un service qui appelle Prisma ?', answer: 'Il remplace l’accès à la BDD par une dépendance contrôlée, pour observer la réaction du service à un résultat ou à une erreur.', detail: 'Cela teste la logique du service ; il faut d’autres tests pour vérifier la vraie requête et le schéma BDD.', tags: ['Tests JS', 'Mock'] },
-  { id: 'course-tests-09', cp: 'cp9', technology: 'tests', question: 'Qu’est-ce que l’injection de dépendances dans un test JS ?', answer: 'Passer explicitement au code une dépendance, par exemple un repository, que le test peut remplacer par un double.', detail: 'makeService({ findById }) utilise un vrai repository en application et un fake contrôlé dans le test.', tags: ['Tests JS', 'Injection'] },
-  { id: 'course-tests-10', cp: 'cp9', technology: 'tests', question: 'Avec node:test, comment observer les arguments reçus par une fonction mockée ?', answer: 'Créer le double avec t.mock.fn(), puis lire fn.mock.calls et fn.mock.callCount().', detail: 'assert.deepStrictEqual(fn.mock.calls[0].arguments, [7]) vérifie l’id transmis ; vérifier aussi le résultat métier.', tags: ['Tests JS', 'node:test', 'Mock'] },
-  { id: 'course-tests-11', cp: 'cp9', technology: 'tests', question: 'Pourquoi les tests d’intégration doivent-ils avoir une BDD dédiée ?', answer: 'Ils écrivent et réinitialisent leurs données. Une BDD dédiée évite d’effacer la base de développement ou de production et rend l’état initial maîtrisable.', detail: 'Le setup OQuiz crée oquiztest et tronque les tables entre les tests. Vérifier le contexte et DATABASE_URL avant de l’exécuter.', tags: ['Tests JS', 'BDD'] },
-  { id: 'course-tests-12', cp: 'cp9', technology: 'tests', question: 'À quoi servent beforeEach et after dans les tests de spécification API ?', answer: 'beforeEach prépare un état connu avant chaque test ; after libère les ressources communes après les tests.', detail: 'OQuiz réinitialise les tables, puis ferme Express, Prisma et le conteneur de test. Attendre le nettoyage évite des ressources ouvertes.', tags: ['Tests JS', 'Hooks'] },
-  { id: 'course-tests-13', cp: 'cp9', technology: 'tests', question: 'Avec validateStatus: () => true dans Axios, comment vérifier un 404 ?', answer: 'La requête se résout avec une réponse : vérifier response.status === 404 et le corps attendu.', detail: 'Elle ne rejette pas à cause du statut HTTP. Les erreurs de transport peuvent toujours provoquer un rejet.', tags: ['Tests JS', 'Axios'] },
-  { id: 'course-tests-14', cp: 'cp9', technology: 'tests', question: 'Pourquoi assert.strictEqual(data.length, data.length) ne teste-t-il rien ?', answer: 'La valeur est comparée à elle-même : l’assertion réussit indépendamment de l’exigence métier.', detail: 'Comparer à un attendu indépendant, comme le nombre de fixtures créées, puis vérifier les valeurs réellement retournées.', tags: ['Tests JS', 'Qualité'] },
-  { id: 'course-tests-15', cp: 'cp9', technology: 'tests', question: 'Dans Vitest, que font toBe et toEqual ?', answer: 'toBe compare une primitive ou l’identité ; toEqual compare aussi la structure des objets et tableaux.', detail: 'expect({ id: 7 }).toEqual({ id: 7 }) réussit ; les deux objets restent distincts.', tags: ['Tests JS', 'Vitest'] },
-  { id: 'course-tests-16', cp: 'cp9', technology: 'tests', question: 'Que signifie Red → Green → Refactor dans l’exercice TDD du client ?', answer: 'Écrire un test qui échoue pour le bon besoin ; coder pour le faire réussir ; améliorer le code en gardant les tests verts.', detail: 'Pour toReadableDate, utiliser une date maîtrisée et un attendu français précis. La couverture seule ne prouve pas que l’assertion est utile.', tags: ['Tests JS', 'TDD', 'Vitest'] },
-
-  { id: 'course-backend-01', cp: 'cp3', technology: 'backend', question: 'Dans une API Node/Express, quels rôles ont le router et le contrôleur ?', answer: 'Le router associe méthode et chemin aux handlers ; le contrôleur orchestre validation, logique et réponse HTTP.', detail: 'Un service peut porter la règle métier et un repository l’accès aux données lorsque cette séparation aide le projet.', tags: ['Backend', 'Express'] },
-  { id: 'course-backend-02', cp: 'cp3', technology: 'backend', question: 'Express : où lire /levels/7, ?page=2 et un JSON envoyé par le client ?', answer: '7 dans req.params.id ; 2 dans req.query.page ; le JSON décodé dans req.body après express.json().', detail: 'Les valeurs de params et query nécessitent conversion et validation ; aucune entrée client n’est fiable par défaut.', tags: ['Backend', 'Express'] },
-  { id: 'course-backend-03', cp: 'cp3', technology: 'backend', question: 'Que fait next() et pourquoi l’ordre des middlewares compte-t-il ?', answer: 'next() transmet le contrôle au handler suivant. Chaque middleware doit pouvoir exploiter ce que les précédents ont préparé.', detail: 'Placer express.json avant les routes, la 404 après les routes et le middleware d’erreur en dernier.', tags: ['Backend', 'Middleware'] },
-  { id: 'course-backend-04', cp: 'cp3', technology: 'backend', question: 'Express 5 : que devient une erreur dans un contrôleur async ?', answer: 'Le rejet de la promesse retournée est transmis à la gestion d’erreur. Un callback ou une tâche détachée exige une transmission explicite adaptée.', detail: 'Le middleware d’erreur a quatre arguments : err, req, res, next. Éviter d’envoyer deux réponses.', tags: ['Backend', 'Express', 'Erreurs'] },
-  { id: 'course-backend-05', cp: 'cp3', technology: 'backend', question: 'Pourquoi valider req.body avec Zod si le projet utilise TypeScript ?', answer: 'TypeScript vérifie le code à la compilation, mais les données HTTP arrivent à l’exécution. Zod vérifie alors leur forme et leurs contraintes.', detail: 'Un client peut envoyer { name: 123 } même si le type attendu indique string.', tags: ['Backend', 'Zod'] },
-  { id: 'course-backend-06', cp: 'cp3', technology: 'backend', question: 'Zod : quelle différence entre parse et safeParse ?', answer: 'parse retourne les données validées ou lève une ZodError ; safeParse retourne un objet indiquant success, avec data ou error.', detail: 'Utiliser parseAsync si les validations sont asynchrones. Dans l’API du cours, le middleware global transforme ZodError en 422.', tags: ['Backend', 'Zod'] },
-  { id: 'course-backend-07', cp: 'cp3', technology: 'backend', question: 'Comment distinguer 401, 403, 404, 409 et 422 dans l’API du cours ?', answer: '401 : authentification absente/invalide ; 403 : permission refusée ; 404 : ressource absente ; 409 : conflit ; 422 : validation des données échouée.', detail: 'Le contrat API doit documenter les statuts et permettre aux tests de vérifier chaque cas.', tags: ['Backend', 'HTTP'] },
-  { id: 'course-backend-08', cp: 'cp3', technology: 'backend', question: 'OQuiz : un author connecté peut-il créer un Level réservé aux admins ?', answer: 'Non. Son authentification établit son identité, mais l’autorisation exige le rôle admin sur cette route.', detail: 'Le middleware checkRoles refuse avec 403 un jeton valide dont le rôle est author. Vérifier aussi la propriété si la règle métier l’exige.', tags: ['Backend', 'Sécurité'] },
-  { id: 'course-backend-09', cp: 'cp3', technology: 'backend', question: 'Pourquoi jwt.decode ne suffit-il pas pour authentifier une requête ?', answer: 'decode lit le contenu sans vérifier sa signature. verify contrôle la signature et, selon les options, notamment l’expiration.', detail: 'Vérifier aussi la forme du payload et les critères attendus avant de faire confiance à userId/role. Un JWT signé reste lisible.', tags: ['Backend', 'JWT'] },
-  { id: 'course-backend-10', cp: 'cp3', technology: 'backend', question: 'Pourquoi stocker un hash argon2 plutôt que le mot de passe et que protège HttpOnly ?', answer: 'Le hash sert à vérifier une tentative sans stocker le mot de passe en clair. HttpOnly empêche JavaScript de lire le cookie.', detail: 'Le hash ne se renvoie pas au client. HttpOnly ne bloque pas à lui seul toutes les attaques XSS ou CSRF.', tags: ['Backend', 'Argon2', 'Cookies'] },
-  { id: 'course-backend-11', cp: 'cp8', technology: 'backend', question: 'Prisma : que renvoient findMany et findUnique si rien ne correspond ?', answer: 'findMany retourne un tableau vide ; findUnique retourne null. Les variantes OrThrow lèvent une erreur.', detail: 'Le contrôleur décide ensuite du contrat HTTP, par exemple liste vide ou 404 pour une ressource ciblée.', tags: ['Backend', 'Prisma'] },
-  { id: 'course-backend-12', cp: 'cp8', technology: 'backend', question: 'Prisma : à quoi servent where, select et include ?', answer: 'where filtre les enregistrements ; select choisit des champs ; include charge une relation associée.', detail: 'include: { author: { select: { id: true } } } charge seulement l’id de l’auteur dans cette relation.', tags: ['Backend', 'Prisma'] },
-  { id: 'course-backend-13', cp: 'cp8', technology: 'backend', question: 'Comment paginer une liste avec Prisma et éviter un ordre variable ?', answer: 'Valider et borner page/pageSize, utiliser skip et take, puis un orderBy déterministe, par exemple id asc.', detail: 'skip = (page - 1) * pageSize. Pour de grands parcours, considérer une pagination par curseur avec une clé unique cohérente.', tags: ['Backend', 'Prisma', 'Pagination'] },
-  { id: 'course-backend-14', cp: 'cp8', technology: 'backend', question: 'Quelle différence entre prisma generate, migrate dev et migrate deploy ?', answer: 'generate produit le client ; migrate dev prépare et applique les migrations en développement ; migrate deploy applique les migrations existantes dans l’environnement cible.', detail: 'Générer le client ne crée pas les tables. Le seed ajoute des données et ne remplace pas une migration.', tags: ['Backend', 'Prisma', 'Migrations'] },
-  { id: 'course-backend-15', cp: 'cp8', technology: 'backend', question: 'Pourquoi vérifier un doublon dans le code ne remplace-t-il pas une contrainte UNIQUE ?', answer: 'Deux requêtes concurrentes peuvent vérifier simultanément que la valeur est libre. La contrainte en BDD impose l’unicité au moment de l’écriture.', detail: 'Gérer ensuite l’erreur de contrainte pour fournir une réponse claire, souvent 409 selon le contrat.', tags: ['Backend', 'Prisma', 'Contraintes'] },
-  { id: 'course-backend-16', cp: 'cp8', technology: 'backend', question: 'Que garantit une transaction et un sanitizer HTML bloque-t-il une injection SQL ?', answer: 'La transaction valide ensemble ses opérations ou les annule en cas d’échec. Un sanitizer HTML ne sécurise pas une requête SQL construite par concaténation.', detail: 'Employer les opérations Prisma et, pour du SQL brut, une API paramétrée. Ne pas incorporer directement les saisies dans une chaîne SQL.', tags: ['Backend', 'Prisma', 'Transaction'] },
+  {
+    "id": "course-docker-01",
+    "cp": "cp1",
+    "technology": "docker",
+    "question": "Docker : qu’est-ce qu’une image et qu’est-ce qu’un conteneur ?",
+    "answer": "Une image est le paquet de fichiers et de réglages servant à créer un conteneur ; le conteneur est l’environnement d’exécution créé à partir de ce paquet.",
+    "detail": "La même image peut servir à plusieurs conteneurs, chacun avec son état.",
+    "tags": [
+      "Docker",
+      "Bases"
+    ],
+    "sources": [
+      {
+        "label": "Docker · définition d’une image",
+        "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/",
+        "kind": "official"
+      },
+      {
+        "label": "Docker · définition d’un conteneur",
+        "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-02",
+    "cp": "cp1",
+    "technology": "docker",
+    "question": "Docker : après avoir arrêté un conteneur, run ou start ?",
+    "answer": "start redémarre le conteneur conservé. run crée un nouveau conteneur puis le démarre.",
+    "detail": "docker stop ne supprime pas le conteneur ; un nouveau run avec le même nom peut échouer.",
+    "tags": [
+      "Docker",
+      "Commandes"
+    ],
+    "sources": [
+      {
+        "label": "Docker · créer et démarrer un conteneur",
+        "url": "https://docs.docker.com/reference/cli/docker/container/run/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-03",
+    "cp": "cp1",
+    "technology": "docker",
+    "question": "Un conteneur s’arrête immédiatement : quelles informations regarder ?",
+    "answer": "Son état et code de sortie avec docker ps -a, puis les messages du programme avec docker logs.",
+    "detail": "Un arrêt normal après une commande courte n’est pas une panne. Le code de sortie et les logs permettent de distinguer les cas.",
+    "tags": [
+      "Docker",
+      "Diagnostic"
+    ],
+    "sources": [
+      {
+        "label": "Docker · créer et démarrer un conteneur",
+        "url": "https://docs.docker.com/reference/cli/docker/container/run/",
+        "kind": "official"
+      },
+      {
+        "label": "Docker · définition d’un conteneur",
+        "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-04",
+    "cp": "cp1",
+    "technology": "docker",
+    "question": "Que relie -p 127.0.0.1:8088:80 ?",
+    "answer": "Le port 8088 de ta machine au port 80 du conteneur, avec un accès limité à la boucle locale.",
+    "detail": "Le navigateur utilise http://127.0.0.1:8088. EXPOSE seul ne crée pas cette publication.",
+    "tags": [
+      "Docker",
+      "Ports"
+    ],
+    "sources": [
+      {
+        "label": "Docker · créer et démarrer un conteneur",
+        "url": "https://docs.docker.com/reference/cli/docker/container/run/",
+        "kind": "official"
+      },
+      {
+        "label": "Docker · instructions du Dockerfile",
+        "url": "https://docs.docker.com/reference/dockerfile/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-05",
+    "cp": "cp1",
+    "technology": "docker",
+    "question": "Dockerfile : quand sont exécutés RUN et CMD ?",
+    "answer": "RUN agit pendant la fabrication de l’image. CMD indique le programme par défaut à démarrer dans le conteneur.",
+    "detail": "Installer des dépendances est une étape de build ; lancer le serveur est une étape d’exécution.",
+    "tags": [
+      "Docker",
+      "Dockerfile"
+    ],
+    "sources": [
+      {
+        "label": "Docker · instructions du Dockerfile",
+        "url": "https://docs.docker.com/reference/dockerfile/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-06",
+    "cp": "cp1",
+    "technology": "docker",
+    "question": "Pourquoi installer les dépendances avant de copier les fichiers de code ?",
+    "answer": "Pour réutiliser le cache de cette installation si les fichiers décrivant les dépendances n’ont pas changé.",
+    "detail": "Copier package.json et le lockfile, lancer npm ci, puis copier les sources limite les réinstallations inutiles.",
+    "tags": [
+      "Docker",
+      "Cache"
+    ],
+    "sources": [
+      {
+        "label": "Docker · réutilisation du cache",
+        "url": "https://docs.docker.com/get-started/docker-concepts/building-images/using-the-build-cache/",
+        "kind": "official"
+      },
+      {
+        "label": "npm · installation depuis un lockfile",
+        "url": "https://docs.npmjs.com/cli/v11/commands/npm-ci/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-07",
+    "cp": "cp1",
+    "technology": "docker",
+    "question": "Que fait .dockerignore dans un build ?",
+    "answer": "Il exclut des fichiers du contexte envoyé au build, par exemple .env, .git ou node_modules.",
+    "detail": "COPY ne doit pas emporter des secrets ou des dépendances installées sur une autre machine.",
+    "tags": [
+      "Docker",
+      "Dockerfile"
+    ],
+    "sources": [
+      {
+        "label": "Docker · instructions du Dockerfile",
+        "url": "https://docs.docker.com/reference/dockerfile/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-08",
+    "cp": "cp1",
+    "technology": "docker",
+    "question": "Comment distinguer un argument de build et une variable au démarrage ?",
+    "answer": "ARG configure la fabrication de l’image ; une variable donnée avec docker run -e configure le programme lancé.",
+    "detail": "Changer TITLE=Lire en TITLE=Marcher ne nécessite pas de rebuild si le programme lit cette variable au démarrage. Ne pas placer de secrets dans l’image.",
+    "tags": [
+      "Docker",
+      "Configuration"
+    ],
+    "sources": [
+      {
+        "label": "Docker · instructions du Dockerfile",
+        "url": "https://docs.docker.com/reference/dockerfile/",
+        "kind": "official"
+      },
+      {
+        "label": "Docker · créer et démarrer un conteneur",
+        "url": "https://docs.docker.com/reference/cli/docker/container/run/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-09",
+    "cp": "cp10",
+    "technology": "docker",
+    "question": "Deux services Compose web et client : quelle adresse client utilise-t-il pour web ?",
+    "answer": "Le nom du service et son port interne, par exemple http://web:80.",
+    "detail": "localhost dans client désigne client lui-même. Le navigateur de ta machine utilise le port publié, par exemple 8090.",
+    "tags": [
+      "Docker",
+      "Compose",
+      "Réseau"
+    ],
+    "sources": [
+      {
+        "label": "Docker Compose · réseau et noms de services",
+        "url": "https://docs.docker.com/compose/how-tos/networking/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-10",
+    "cp": "cp10",
+    "technology": "docker",
+    "question": "Volume nommé ou bind mount : quelle différence ?",
+    "answer": "Le volume nommé est un stockage géré par Docker ; le bind mount expose un chemin précis de ta machine dans le conteneur.",
+    "detail": "Un volume convient aux données persistantes ; un bind mount peut partager le code en développement.",
+    "tags": [
+      "Docker",
+      "Stockage"
+    ],
+    "sources": [
+      {
+        "label": "Docker · volumes persistants",
+        "url": "https://docs.docker.com/engine/storage/volumes/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-11",
+    "cp": "cp10",
+    "technology": "docker",
+    "question": "docker compose down et down -v : quelle conséquence sur les données ?",
+    "answer": "down conserve normalement les volumes nommés ; down -v supprime aussi ces volumes et les données qui y sont stockées.",
+    "detail": "Les données uniquement présentes dans la couche du conteneur supprimé sont perdues même sans -v.",
+    "tags": [
+      "Docker",
+      "Persistance"
+    ],
+    "sources": [
+      {
+        "label": "Docker Compose · arrêt et suppression",
+        "url": "https://docs.docker.com/reference/cli/docker/compose/down/",
+        "kind": "official"
+      },
+      {
+        "label": "Docker · volumes persistants",
+        "url": "https://docs.docker.com/engine/storage/volumes/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-docker-12",
+    "cp": "cp10",
+    "technology": "docker",
+    "question": "Un service démarré est-il forcément prêt à répondre ?",
+    "answer": "Non : le programme peut encore s’initialiser. Un healthcheck vérifie sa disponibilité ; service_healthy peut attendre sa réussite initiale.",
+    "detail": "depends_on sous forme simple impose un ordre, pas la disponibilité complète. Un service peut aussi tomber en panne plus tard.",
+    "tags": [
+      "Docker",
+      "Disponibilité"
+    ],
+    "sources": [
+      {
+        "label": "Docker Compose · démarrage et disponibilité",
+        "url": "https://docs.docker.com/compose/how-tos/startup-order/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-01",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Qu’apportent node:test et Vitest pour tester du JavaScript ?",
+    "answer": "Ils exécutent des tests et signalent ceux qui réussissent ou échouent. node:test est intégré à Node ; Vitest est un package à installer.",
+    "detail": "node:assert fournit des assertions côté Node ; Vitest fournit notamment expect.",
+    "tags": [
+      "Tests JS",
+      "node:test",
+      "Vitest"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      },
+      {
+        "label": "Vitest · installer et lancer des tests",
+        "url": "https://vitest.dev/guide/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-02",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Dans un test, quel rôle a une assertion ?",
+    "answer": "Elle compare un résultat observé à une attente ou vérifie une condition, et échoue si cette vérification n’est pas satisfaite.",
+    "detail": "Le runner lance le test ; l’assertion décide si son observation respecte le besoin.",
+    "tags": [
+      "Tests JS",
+      "Bases"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      },
+      {
+        "label": "Node.js · vérifier un résultat avec assert",
+        "url": "https://nodejs.org/api/assert.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-03",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Comment lire Arrange, Act et Assert sur un exemple de compteur ?",
+    "answer": "Préparer la liste de tâches ; appeler countDone(liste) ; vérifier que le nombre vaut le total de tâches terminées attendu.",
+    "detail": "Une liste avec une tâche terminée et une à faire doit donner 1. L’attendu doit être choisi indépendamment du résultat.",
+    "tags": [
+      "Tests JS",
+      "AAA"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      },
+      {
+        "label": "Node.js · vérifier un résultat avec assert",
+        "url": "https://nodejs.org/api/assert.html",
+        "kind": "official"
+      },
+      {
+        "label": "Microsoft Learn · organiser des tests unitaires avec Arrange, Act, Assert",
+        "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-04",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Quelles parties vérifient les tests unitaire, d’intégration et E2E ?",
+    "answer": "Unitaire : une unité isolée. Intégration : plusieurs composants reliés. E2E : un scénario utilisateur complet.",
+    "detail": "Une fonction de filtrage est unitaire ; une requête vers un serveur est une intégration ; créer une tâche via un navigateur est un E2E.",
+    "tags": [
+      "Tests JS",
+      "Niveaux"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      },
+      {
+        "label": "Vitest · installer et lancer des tests",
+        "url": "https://vitest.dev/guide/",
+        "kind": "official"
+      },
+      {
+        "label": "Microsoft Learn · organiser des tests unitaires avec Arrange, Act, Assert",
+        "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices",
+        "kind": "official"
+      },
+      {
+        "label": "Playwright · tests de scénarios dans le navigateur",
+        "url": "https://playwright.dev/docs/intro",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-05",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Deux objets { id: 7 } créés séparément : strictEqual ou deepStrictEqual ?",
+    "answer": "deepStrictEqual pour comparer leur contenu. strictEqual vérifierait qu’il s’agit du même objet.",
+    "detail": "Les deux objets peuvent contenir les mêmes champs sans être la même référence en mémoire.",
+    "tags": [
+      "Tests JS",
+      "node:assert"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · vérifier un résultat avec assert",
+        "url": "https://nodejs.org/api/assert.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-06",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Quelle assertion distingue une exception immédiate d’une promesse rejetée ?",
+    "answer": "assert.throws attend une exception synchrone ; await assert.rejects attend le rejet d’une promesse.",
+    "detail": "Passer une fonction pour que l’assertion observe l’opération. Ne pas oublier await pour rejects.",
+    "tags": [
+      "Tests JS",
+      "Erreurs"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · vérifier un résultat avec assert",
+        "url": "https://nodejs.org/api/assert.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-07",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Pourquoi faut-il attendre une requête asynchrone dans le test ?",
+    "answer": "Pour que le test ne se termine pas avant son résultat et ses assertions.",
+    "detail": "Retourner la promesse ou utiliser async avec await relie son achèvement à celui du test.",
+    "tags": [
+      "Tests JS",
+      "Asynchrone"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-08",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Qu’est-ce qu’un double de test pour une lecture en BDD ?",
+    "answer": "Une fonction de remplacement qui renvoie des données ou une erreur contrôlée sans joindre la vraie BDD.",
+    "detail": "Il permet de vérifier la logique appelante ; il ne démontre pas que la connexion réelle fonctionne.",
+    "tags": [
+      "Tests JS",
+      "Mock"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-09",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Que veut dire injecter une dépendance dans une fonction ?",
+    "answer": "La passer explicitement en argument, pour pouvoir fournir la vraie implémentation ou une version de test.",
+    "detail": "makeService(readTask) peut recevoir une vraie lecture BDD en application et une fonction renvoyant { id: 7, title: \"Lire\" } dans un test.",
+    "tags": [
+      "Tests JS",
+      "Injection"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-10",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Comment vérifier les arguments reçus par un double node:test ?",
+    "answer": "Créer le double avec t.mock.fn, puis lire fn.mock.calls et fn.mock.callCount().",
+    "detail": "Comparer calls[0].arguments à [7] prouve l’identifiant transmis ; vérifier aussi le résultat renvoyé.",
+    "tags": [
+      "Tests JS",
+      "node:test",
+      "Mock"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-11",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Pourquoi réserver une base distincte aux tests qui écrivent des données ?",
+    "answer": "Pour préparer et nettoyer un état connu sans effacer les données à conserver et sans dépendre des autres tests.",
+    "detail": "Une suppression de fixtures doit viser la base dédiée ; la configuration de connexion fait partie du contexte de test.",
+    "tags": [
+      "Tests JS",
+      "Données"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      },
+      {
+        "label": "Prisma ORM 6 · transactions",
+        "url": "https://www.prisma.io/docs/orm/v6/prisma-client/queries/transactions",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-12",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Que peuvent faire beforeEach et after dans une suite de tests ?",
+    "answer": "beforeEach prépare le contexte avant chaque test ; after libère les ressources communes à la fin.",
+    "detail": "Réinitialiser les données empêche une dépendance à l’ordre ; fermer le serveur et la connexion évite un processus qui reste ouvert.",
+    "tags": [
+      "Tests JS",
+      "Hooks"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · exécuter des tests",
+        "url": "https://nodejs.org/api/test.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-13",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Avec Axios et validateStatus: () => true, comment tester un 404 ?",
+    "answer": "Attendre la réponse puis comparer response.status à 404 et vérifier le corps.",
+    "detail": "Cette option accepte les statuts HTTP ; une erreur réseau peut encore rejeter la promesse.",
+    "tags": [
+      "Tests JS",
+      "Axios"
+    ],
+    "sources": [
+      {
+        "label": "Axios · statuts HTTP et erreurs",
+        "url": "https://axios-http.com/docs/handling_errors",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-14",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Pourquoi comparer result.length à result.length ne prouve-t-il pas le résultat attendu ?",
+    "answer": "On compare une valeur à elle-même : le test passe même si le résultat métier est faux.",
+    "detail": "Il faut une attente indépendante, par exemple 1 tâche terminée parmi les données du test.",
+    "tags": [
+      "Tests JS",
+      "Assertions"
+    ],
+    "sources": [
+      {
+        "label": "Node.js · vérifier un résultat avec assert",
+        "url": "https://nodejs.org/api/assert.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-15",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Dans Vitest, quel matcher choisir pour un tableau de titres ?",
+    "answer": "toEqual compare la structure et le contenu du tableau ; toBe comparerait son identité.",
+    "detail": "expect([\"Lire\"]).toEqual([\"Lire\"]) réussit ; les tableaux restent deux objets distincts.",
+    "tags": [
+      "Tests JS",
+      "Vitest"
+    ],
+    "sources": [
+      {
+        "label": "Vitest · comparer les résultats",
+        "url": "https://vitest.dev/api/expect.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-tests-16",
+    "cp": "cp9",
+    "technology": "tests",
+    "question": "Que signifie Red → Green → Refactor sur une fonction nouvelle ?",
+    "answer": "Écrire un test qui échoue pour le besoin ; implémenter pour le rendre vert ; améliorer le code en gardant les tests verts.",
+    "detail": "Un test qui attend [\"Marcher\"] doit échouer si la fonction renvoie toujours []. Il guide ensuite le filtrage et la transformation.",
+    "tags": [
+      "Tests JS",
+      "TDD"
+    ],
+    "sources": [
+      {
+        "label": "Vitest · installer et lancer des tests",
+        "url": "https://vitest.dev/guide/",
+        "kind": "official"
+      },
+      {
+        "label": "Vitest · comparer les résultats",
+        "url": "https://vitest.dev/api/expect.html",
+        "kind": "official"
+      },
+      {
+        "label": "Microsoft Learn · cycle Red, Green, Refactor",
+        "url": "https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions-1/contact-manager/iteration-6-use-test-driven-development-cs",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-01",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "Qu’est-ce qu’une route dans une API Express ?",
+    "answer": "L’association d’une méthode HTTP et d’un chemin à une fonction qui traite la demande.",
+    "detail": "GET /tasks/1 sert à lire la tâche 1 ; le handler ou contrôleur organise son traitement et sa réponse.",
+    "tags": [
+      "Backend",
+      "Express",
+      "Bases"
+    ],
+    "sources": [
+      {
+        "label": "Express 5 · premier serveur",
+        "url": "https://expressjs.com/en/starter/hello-world/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-02",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "Dans /tasks/7?page=2 avec un JSON envoyé, où lire ces trois données ?",
+    "answer": "7 dans req.params.id ; 2 dans req.query.page ; le JSON décodé dans req.body après express.json.",
+    "detail": "Params et query peuvent être du texte ; convertir puis valider. Toutes ces données viennent du client.",
+    "tags": [
+      "Backend",
+      "Requête"
+    ],
+    "sources": [
+      {
+        "label": "Express 5 · chaîne de middlewares",
+        "url": "https://expressjs.com/en/guide/using-middleware/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-03",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "À quoi sert next() dans une chaîne de middlewares ?",
+    "answer": "À transmettre le traitement au middleware suivant lorsque la fonction ne termine pas la réponse.",
+    "detail": "Un middleware qui ne répond pas et n’appelle pas next laisse la requête en attente. Leur ordre suit les besoins du traitement.",
+    "tags": [
+      "Backend",
+      "Middleware"
+    ],
+    "sources": [
+      {
+        "label": "Express 5 · chaîne de middlewares",
+        "url": "https://expressjs.com/en/guide/using-middleware/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-04",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "Express 5 : comment un rejet de handler async rejoint-il la gestion d’erreur ?",
+    "answer": "Express transmet automatiquement le rejet de la promesse retournée au traitement des erreurs.",
+    "detail": "Le middleware d’erreur reçoit error, req, res, next. Une opération détachée ou un callback exige une gestion explicite adaptée.",
+    "tags": [
+      "Backend",
+      "Erreurs"
+    ],
+    "sources": [
+      {
+        "label": "Express 5 · traitement des erreurs",
+        "url": "https://expressjs.com/en/guide/error-handling/",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-05",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "Pourquoi vérifier le JSON à l’exécution même si le code utilise TypeScript ?",
+    "answer": "Parce que le type du code ne contrôle pas ce qu’un client envoie réellement. Une validation comme Zod vérifie les valeurs reçues.",
+    "detail": "Un client peut envoyer { title: 123 } alors que le programme attend un titre texte.",
+    "tags": [
+      "Backend",
+      "Zod",
+      "Validation"
+    ],
+    "sources": [
+      {
+        "label": "Zod · validation des données à l’exécution",
+        "url": "https://zod.dev/basics",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-06",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "Zod : que renvoient parse et safeParse pour une entrée invalide ?",
+    "answer": "parse lève une ZodError ; safeParse retourne success: false et error.",
+    "detail": "En cas de succès, parse renvoie les données validées ; safeParse fournit success: true et data.",
+    "tags": [
+      "Backend",
+      "Zod"
+    ],
+    "sources": [
+      {
+        "label": "Zod · validation des données à l’exécution",
+        "url": "https://zod.dev/basics",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-07",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "Comment distinguer 401, 403, 404, 409 et 422 ?",
+    "answer": "401 : authentification nécessaire ou invalide ; 403 : refus d’accès ; 404 : ressource non trouvée ; 409 : conflit ; 422 : contenu compris mais non traitable.",
+    "detail": "Un titre déjà pris peut produire 409 ; un titre de mauvais type peut produire 422 selon le contrat choisi.",
+    "tags": [
+      "Backend",
+      "HTTP"
+    ],
+    "sources": [
+      {
+        "label": "RFC 9110 · codes de réponse HTTP",
+        "url": "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes",
+        "kind": "standard"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-08",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "Une personne connectée peut-elle modifier toutes les tâches ?",
+    "answer": "Non : le serveur doit vérifier la permission sur la tâche, par exemple comparer son propriétaire à l’identité authentifiée.",
+    "detail": "L’identité répond « qui ? » ; la permission répond « a-t-il le droit sur cette ressource ? ».",
+    "tags": [
+      "Backend",
+      "Permissions"
+    ],
+    "sources": [
+      {
+        "label": "OWASP · vérifier les permissions",
+        "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-09",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "Pourquoi lire un JWT avec decode ne suffit-il pas pour accepter l’identité ?",
+    "answer": "decode ne vérifie pas la signature. verify contrôle le jeton avec la clé et les options attendues, notamment l’expiration.",
+    "detail": "Vérifier ensuite la forme et les informations attendues du contenu ; une signature ne transforme pas le contenu en secret.",
+    "tags": [
+      "Backend",
+      "JWT"
+    ],
+    "sources": [
+      {
+        "label": "jsonwebtoken · signature, verify et decode",
+        "url": "https://github.com/auth0/node-jsonwebtoken",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-10",
+    "cp": "cp3",
+    "technology": "backend",
+    "question": "Que protègent un hash de mot de passe et un cookie HttpOnly ?",
+    "answer": "Le hash adapté permet de vérifier le mot de passe sans conserver le texte. HttpOnly empêche JavaScript de lire le cookie.",
+    "detail": "Ce sont deux mécanismes différents : ni le hash ni HttpOnly ne remplacent les permissions ; HttpOnly ne suffit pas contre une requête CSRF.",
+    "tags": [
+      "Backend",
+      "Mot de passe",
+      "Cookies"
+    ],
+    "sources": [
+      {
+        "label": "OWASP · stockage des mots de passe",
+        "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+        "kind": "official"
+      },
+      {
+        "label": "MDN · propriétés d’un cookie HTTP",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-11",
+    "cp": "cp8",
+    "technology": "backend",
+    "question": "Prisma 6 : que renvoient findMany et findUnique quand aucune donnée ne correspond ?",
+    "answer": "findMany renvoie un tableau vide ; findUnique renvoie null.",
+    "detail": "Une liste vide peut être une réponse normale ; une route visant un identifiant absent peut traduire null en 404 selon son contrat.",
+    "tags": [
+      "Backend",
+      "Prisma"
+    ],
+    "sources": [
+      {
+        "label": "Prisma ORM 6 · méthodes du client",
+        "url": "https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-12",
+    "cp": "cp8",
+    "technology": "backend",
+    "question": "Prisma 6 : que font where, select et include sur une lecture de tâches ?",
+    "answer": "where filtre les lignes ; select choisit les champs renvoyés ; include ajoute les données d’une relation.",
+    "detail": "include: { board: true } permet de lire la liste liée à la tâche. select et include ne se combinent pas au même niveau.",
+    "tags": [
+      "Backend",
+      "Prisma"
+    ],
+    "sources": [
+      {
+        "label": "Prisma ORM 6 · méthodes du client",
+        "url": "https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference",
+        "kind": "official"
+      },
+      {
+        "label": "Prisma ORM 6 · lire les relations",
+        "url": "https://www.prisma.io/docs/orm/v6/prisma-client/queries/relation-queries",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-13",
+    "cp": "cp8",
+    "technology": "backend",
+    "question": "Pourquoi une pagination doit-elle avoir une taille bornée et un tri stable ?",
+    "answer": "Pour limiter le volume lu et retrouver un ordre déterminé entre pages. skip ignore un nombre de lignes ; take limite les résultats.",
+    "detail": "Prisma 6 : orderBy: { id: \"asc\" }, skip: (page - 1) * pageSize, take: pageSize ; valider page et pageSize avant.",
+    "tags": [
+      "Backend",
+      "Pagination"
+    ],
+    "sources": [
+      {
+        "label": "Prisma ORM 6 · méthodes du client",
+        "url": "https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-14",
+    "cp": "cp8",
+    "technology": "backend",
+    "question": "Prisma 6 : que différencient generate, migrate dev et migrate deploy ?",
+    "answer": "generate produit le client ; migrate dev prépare et applique des migrations en développement ; migrate deploy applique les migrations existantes.",
+    "detail": "Une migration change la structure de la base ; un seed ajoute des données. Générer les méthodes ne crée pas les tables.",
+    "tags": [
+      "Backend",
+      "Migrations"
+    ],
+    "sources": [
+      {
+        "label": "Prisma ORM 6 · générer un client",
+        "url": "https://www.prisma.io/docs/orm/v6/prisma-schema/overview/generators",
+        "kind": "official"
+      },
+      {
+        "label": "Prisma ORM 6 · migrations en développement et déploiement",
+        "url": "https://www.prisma.io/docs/orm/v6/prisma-migrate/workflows/development-and-production",
+        "kind": "official"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-15",
+    "cp": "cp8",
+    "technology": "backend",
+    "question": "Deux demandes peuvent-elles créer le même nom malgré une vérification préalable ?",
+    "answer": "Oui : chacune peut voir le nom libre avant que l’autre écrive. Une contrainte UNIQUE en BDD impose l’unicité au moment de l’écriture.",
+    "detail": "Traiter l’erreur de contrainte pour fournir une réponse cohérente, par exemple 409 si le contrat utilise ce statut.",
+    "tags": [
+      "Backend",
+      "Contraintes"
+    ],
+    "sources": [
+      {
+        "label": "Prisma ORM 6 · méthodes du client",
+        "url": "https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference",
+        "kind": "official"
+      },
+      {
+        "label": "RFC 9110 · codes de réponse HTTP",
+        "url": "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes",
+        "kind": "standard"
+      }
+    ]
+  },
+  {
+    "id": "course-backend-16",
+    "cp": "cp8",
+    "technology": "backend",
+    "question": "Pourquoi une transaction et une requête SQL paramétrée protègent-elles deux problèmes différents ?",
+    "answer": "La transaction évite un groupe d’écritures partiellement validé ; les paramètres évitent qu’une saisie soit interprétée comme une instruction SQL.",
+    "detail": "Si le deuxième compte du transfert ne peut être mis à jour, le premier reste inchangé. Un sanitizer HTML ne protège pas une concaténation SQL.",
+    "tags": [
+      "Backend",
+      "Transaction",
+      "SQL"
+    ],
+    "sources": [
+      {
+        "label": "Prisma ORM 6 · transactions",
+        "url": "https://www.prisma.io/docs/orm/v6/prisma-client/queries/transactions",
+        "kind": "official"
+      },
+      {
+        "label": "OWASP · prévention des injections SQL",
+        "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html",
+        "kind": "official"
+      }
+    ]
+  }
 ];
 
 export const courseSources = [
-  { label: 'Cours SC02E01 · Conteneurisation Docker', technology: 'docker', path: 'SC01234-OQUIZ-Zer0absolute/docs/cours/SC02/SC02E01.md' },
-  { label: 'Fiche de cours Docker', technology: 'docker', path: 'SC01234-OQUIZ-Zer0absolute/docs/fiches/docker.md' },
-  { label: 'OQuiz · Dockerfile API', technology: 'docker', path: 'SC01234-OQUIZ-Zer0absolute/api/Dockerfile' },
-  { label: 'OQuiz · Dockerfile client multi-stage', technology: 'docker', path: 'SC01234-OQUIZ-Zer0absolute/client/Dockerfile' },
-  { label: 'OQuiz · Compose de production', technology: 'docker', path: 'SC01234-OQUIZ-Zer0absolute/docker-compose.prod.yml' },
-  { label: 'OQuiz · Compose de développement et healthchecks', technology: 'docker', path: 'SC01234-OQUIZ-Zer0absolute/docker-compose.yml' },
-  { label: 'Docker · ordre de démarrage et disponibilité', technology: 'docker', url: 'https://docs.docker.com/compose/how-tos/startup-order/' },
-  { label: 'Docker · optimiser le cache de build', technology: 'docker', url: 'https://docs.docker.com/build/cache/optimize/' },
-  { label: 'Cours SC02E03 · Tests automatisés', technology: 'tests', path: 'SC01234-OQUIZ-Zer0absolute/docs/cours/SC02/SC02E03.md' },
-  { label: 'OQuiz · scripts et dépendances API', technology: 'tests', path: 'SC01234-OQUIZ-Zer0absolute/api/package.json' },
-  { label: 'OQuiz · tests unitaires node:test', technology: 'tests', path: 'SC01234-OQUIZ-Zer0absolute/api/src/utils/validators.unit.test.ts' },
-  { label: 'OQuiz · tests HTTP des niveaux', technology: 'tests', path: 'SC01234-OQUIZ-Zer0absolute/api/src/controllers/level.controller.spec.test.ts' },
-  { label: 'OQuiz · environnement des tests et BDD dédiée', technology: 'tests', path: 'SC01234-OQUIZ-Zer0absolute/api/src/test/config/global-setup.ts' },
-  { label: 'OQuiz · requester Axios des tests', technology: 'tests', path: 'SC01234-OQUIZ-Zer0absolute/api/src/test/axios.ts' },
-  { label: 'OQuiz · scripts Vitest client', technology: 'tests', path: 'SC01234-OQUIZ-Zer0absolute/client/package.json' },
-  { label: 'OQuiz · exercice TDD Vitest sur les dates', technology: 'tests', path: 'SC01234-OQUIZ-Zer0absolute/client/src/lib/utils.unit.test.ts' },
-  { label: 'Node · runner et mocks natifs', technology: 'tests', url: 'https://nodejs.org/api/test.html' },
-  { label: 'Vitest · assertions expect', technology: 'tests', url: 'https://vitest.dev/api/expect.html' },
-  { label: 'OQuiz · ordre des middlewares Express', technology: 'backend', path: 'SC01234-OQUIZ-Zer0absolute/api/src/app.ts' },
-  { label: 'OQuiz · route et contrôle des rôles', technology: 'backend', path: 'SC01234-OQUIZ-Zer0absolute/api/src/routers/level.router.ts' },
-  { label: 'OQuiz · contrôleur, Zod et requêtes Prisma', technology: 'backend', path: 'SC01234-OQUIZ-Zer0absolute/api/src/controllers/level.controller.ts' },
-  { label: 'OQuiz · argon2, connexion et rotation des jetons', technology: 'backend', path: 'SC01234-OQUIZ-Zer0absolute/api/src/controllers/auth.controller.ts' },
-  { label: 'OQuiz · middleware JWT et autorisation', technology: 'backend', path: 'SC01234-OQUIZ-Zer0absolute/api/src/middlewares/accessControl.middleware.ts' },
-  { label: 'OQuiz · gestion globale des erreurs', technology: 'backend', path: 'SC01234-OQUIZ-Zer0absolute/api/src/middlewares/globalError.middleware.ts' },
-  { label: 'OQuiz · modèles Prisma et contraintes', technology: 'backend', path: 'SC01234-OQUIZ-Zer0absolute/api/prisma/schema.prisma' },
-  { label: 'Express · gestion des erreurs et handlers async', technology: 'backend', url: 'https://expressjs.com/en/guide/error-handling/' },
-  { label: 'Zod · validation à l’exécution', technology: 'backend', url: 'https://zod.dev/basics' },
-  { label: 'Prisma · lecture des données et pagination', technology: 'backend', url: 'https://www.prisma.io/docs/orm/fundamentals/reading-data' },
-  { label: 'jsonwebtoken · verify et decode', technology: 'backend', url: 'https://github.com/auth0/node-jsonwebtoken' },
+  {
+    "label": "Docker · définition d’une image",
+    "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "Docker · définition d’un conteneur",
+    "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "Docker · créer et démarrer un conteneur",
+    "url": "https://docs.docker.com/reference/cli/docker/container/run/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "Docker · instructions du Dockerfile",
+    "url": "https://docs.docker.com/reference/dockerfile/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "Docker · réutilisation du cache",
+    "url": "https://docs.docker.com/get-started/docker-concepts/building-images/using-the-build-cache/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "Docker Compose · réseau et noms de services",
+    "url": "https://docs.docker.com/compose/how-tos/networking/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "Docker Compose · démarrage et disponibilité",
+    "url": "https://docs.docker.com/compose/how-tos/startup-order/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "Docker · volumes persistants",
+    "url": "https://docs.docker.com/engine/storage/volumes/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "Docker Compose · arrêt et suppression",
+    "url": "https://docs.docker.com/reference/cli/docker/compose/down/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "npm · installation depuis un lockfile",
+    "url": "https://docs.npmjs.com/cli/v11/commands/npm-ci/",
+    "kind": "official",
+    "technology": "docker"
+  },
+  {
+    "label": "Node.js · exécuter des tests",
+    "url": "https://nodejs.org/api/test.html",
+    "kind": "official",
+    "technology": "tests"
+  },
+  {
+    "label": "Node.js · vérifier un résultat avec assert",
+    "url": "https://nodejs.org/api/assert.html",
+    "kind": "official",
+    "technology": "tests"
+  },
+  {
+    "label": "Node.js · créer un serveur HTTP",
+    "url": "https://nodejs.org/api/http.html",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "MDN · requête et réponse avec fetch",
+    "url": "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch",
+    "kind": "official",
+    "technology": "tests"
+  },
+  {
+    "label": "Axios · statuts HTTP et erreurs",
+    "url": "https://axios-http.com/docs/handling_errors",
+    "kind": "official",
+    "technology": "tests"
+  },
+  {
+    "label": "Vitest · installer et lancer des tests",
+    "url": "https://vitest.dev/guide/",
+    "kind": "official",
+    "technology": "tests"
+  },
+  {
+    "label": "Vitest · comparer les résultats",
+    "url": "https://vitest.dev/api/expect.html",
+    "kind": "official",
+    "technology": "tests"
+  },
+  {
+    "label": "Express 5 · premier serveur",
+    "url": "https://expressjs.com/en/starter/hello-world/",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "Express 5 · chaîne de middlewares",
+    "url": "https://expressjs.com/en/guide/using-middleware/",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "Express 5 · traitement des erreurs",
+    "url": "https://expressjs.com/en/guide/error-handling/",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "Zod · validation des données à l’exécution",
+    "url": "https://zod.dev/basics",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "RFC 9110 · codes de réponse HTTP",
+    "url": "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes",
+    "kind": "standard",
+    "technology": "backend"
+  },
+  {
+    "label": "OWASP · vérifier les permissions",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "OWASP · stockage des mots de passe",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "jsonwebtoken · signature, verify et decode",
+    "url": "https://github.com/auth0/node-jsonwebtoken",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "MDN · propriétés d’un cookie HTTP",
+    "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "Prisma ORM 6 · méthodes du client",
+    "url": "https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "Prisma ORM 6 · lire les relations",
+    "url": "https://www.prisma.io/docs/orm/v6/prisma-client/queries/relation-queries",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "Prisma ORM 6 · générer un client",
+    "url": "https://www.prisma.io/docs/orm/v6/prisma-schema/overview/generators",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "Prisma ORM 6 · migrations en développement et déploiement",
+    "url": "https://www.prisma.io/docs/orm/v6/prisma-migrate/workflows/development-and-production",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "Prisma ORM 6 · transactions",
+    "url": "https://www.prisma.io/docs/orm/v6/prisma-client/queries/transactions",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "OWASP · prévention des injections SQL",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html",
+    "kind": "official",
+    "technology": "backend"
+  },
+  {
+    "label": "Microsoft Learn · organiser des tests unitaires avec Arrange, Act, Assert",
+    "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices",
+    "kind": "official",
+    "technology": "tests"
+  },
+  {
+    "label": "Microsoft Learn · cycle Red, Green, Refactor",
+    "url": "https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions-1/contact-manager/iteration-6-use-test-driven-development-cs",
+    "kind": "official",
+    "technology": "tests"
+  },
+  {
+    "label": "Playwright · tests de scénarios dans le navigateur",
+    "url": "https://playwright.dev/docs/intro",
+    "kind": "official",
+    "technology": "tests"
+  },
+  {
+    "label": "Prisma ORM 6 · configurer la source de données",
+    "url": "https://www.prisma.io/docs/orm/v6/prisma-schema/overview/data-sources",
+    "kind": "official",
+    "technology": "backend"
+  }
 ];
