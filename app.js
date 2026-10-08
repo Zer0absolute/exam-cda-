@@ -8,6 +8,9 @@ import { defaultState, sanitizeState, localDay, scheduleReview, buildCardQueue, 
 const oralQuestions = [...conceptQuestions, ...dossierQuestions];
 
 const STORAGE = new URLSearchParams(location.search).has('test') ? 'cda-studio-test-v1' : 'cda-studio-v1';
+const SIDEBAR_STORAGE = `${STORAGE}-sidebar-collapsed`;
+let sidebarCollapsed = false;
+try { sidebarCollapsed = localStorage.getItem(SIDEBAR_STORAGE) === 'true'; } catch {}
 const $ = selector => document.querySelector(selector);
 const h = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 let storageError = '';
@@ -51,12 +54,27 @@ function icon(name, size = 20) {
     back: '<path d="M20 12H4m6-6-6 6 6 6"/>',
     reset: '<path d="M3 10a9 9 0 1 1 2 9M3 3v7h7"/>',
     calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 2v6M17 2v6M3 11h18"/>',
+    'panel-close': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m7-11-3 3 3 3"/>',
+    'panel-open': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m4-11 3 3-3 3"/>',
   };
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.book}</svg>`;
 }
 function save() {
   try { localStorage.setItem(STORAGE, JSON.stringify(state)); }
   catch { toast('Le navigateur ne peut pas enregistrer. Exporte ta progression depuis Réglages.'); }
+}
+function sidebarToggle() {
+  const label = sidebarCollapsed ? 'Déplier la barre latérale' : 'Replier la barre latérale';
+  return `<button id="sidebar-toggle" type="button" class="sidebar-toggle" data-action="sidebar-toggle" aria-controls="sidebar" aria-expanded="${!sidebarCollapsed}" aria-label="${label}" title="${label}">${icon(sidebarCollapsed ? 'panel-open' : 'panel-close')}</button>`;
+}
+function applySidebarState() {
+  $('#app').classList.toggle('sidebar-collapsed', sidebarCollapsed);
+  const toggle = $('#sidebar-toggle');
+  const label = sidebarCollapsed ? 'Déplier la barre latérale' : 'Replier la barre latérale';
+  toggle.setAttribute('aria-expanded', String(!sidebarCollapsed));
+  toggle.setAttribute('aria-label', label);
+  toggle.title = label;
+  toggle.innerHTML = icon(sidebarCollapsed ? 'panel-open' : 'panel-close');
 }
 function toast(message) { const node = $('#toast'); node.textContent = message; node.classList.add('show'); clearTimeout(toast.timeout); toast.timeout = setTimeout(() => node.classList.remove('show'), 5000); }
 function go(id) { if (view === id) { render(); return; } pendingNavigation = { cp: filterCp, kind: filterKind, technology: filterTechnology, sheet: selectedSheet }; location.hash = id; }
@@ -72,7 +90,8 @@ function daysToExam() { if (!state.settings.examDate) return null; const end = n
 function render() {
   const days = daysToExam();
   const dayText = days === null ? 'La régularité fait la différence.' : days > 0 ? `${days} jour${days > 1 ? 's' : ''} pour prendre confiance.` : days === 0 ? 'C’est le grand jour. Tu as travaillé.' : 'Ton parcours continue.';
-  $('#app').innerHTML = `<aside class="sidebar"><a href="#today" class="brand"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>CDA<span class="brand-light"> studio</span></span></a><div class="workspace-label">TON ESPACE DE RÉVISION</div><nav aria-label="Navigation principale">${nav.map(([id, label, symbol]) => `<a href="#${id}" class="nav-item ${view === id ? 'active' : ''}" ${view === id ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${id === 'cards' ? `<span class="nav-count">${dueCount(flashcards, state.reviews)}</span>` : ''}</a>`).join('')}</nav><div class="sidebar-bottom"><div class="exam-note"><span class="little-dot"></span><strong>Objectif : titre CDA</strong><p>${dayText}</p><a href="#settings">${days === null ? 'Ajouter ma date' : 'Modifier ma date'} ${icon('arrow', 14)}</a></div><a href="#sources" class="nav-item ${view === 'sources' ? 'active' : ''}">${icon('source')}<span>Référentiel & dossiers</span></a><a href="#settings" class="nav-item ${view === 'settings' ? 'active' : ''}">${icon('settings')}<span>Réglages & sauvegarde</span></a><div class="profile"><span class="avatar">M</span><div><strong>Maël</strong><span>Préparation à la soutenance</span></div><span class="local-dot" title="Application locale"></span></div></div></aside><div class="shell"><header class="topbar"><span>MON PARCOURS <span class="topbar-divider">/</span> <strong>${h(nav.find(([id]) => id === view)?.[1] || (view === 'settings' ? 'Réglages' : 'Référentiel & dossiers'))}</strong></span><span class="date-label">${icon('calendar', 15)} ${h(new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }))}</span></header><main id="main" tabindex="-1">${({ today: dashboard, sheets, tech: coursesView, cards, oral, written: writtenView, exam: examView, settings, sources })[view]()}</main><footer class="footer"><span>Un concept compris. Un exemple concret. Un peu plus de confiance.</span><span><span class="little-dot"></span> Progression enregistrée dans ce navigateur</span></footer></div>`;
+  $('#app').innerHTML = `<aside id="sidebar" class="sidebar"><a href="#today" class="brand" aria-label="CDA Studio · Accueil" title="CDA Studio · Accueil"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span class="brand-name">CDA<span class="brand-light"> studio</span></span></a><div class="workspace-label">TON ESPACE DE RÉVISION</div><nav aria-label="Navigation principale">${nav.map(([id, label, symbol]) => `<a href="#${id}" aria-label="${h(label)}" title="${h(label)}" class="nav-item ${view === id ? 'active' : ''}" ${view === id ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span>${id === 'cards' ? `<span class="nav-count">${dueCount(flashcards, state.reviews)}</span>` : ''}</a>`).join('')}</nav><div class="sidebar-bottom"><div class="exam-note"><span class="little-dot"></span><strong>Objectif : titre CDA</strong><p>${dayText}</p><a href="#settings">${days === null ? 'Ajouter ma date' : 'Modifier ma date'} ${icon('arrow', 14)}</a></div><a href="#sources" aria-label="Référentiel & dossiers" title="Référentiel & dossiers" class="nav-item ${view === 'sources' ? 'active' : ''}">${icon('source')}<span>Référentiel & dossiers</span></a><a href="#settings" aria-label="Réglages & sauvegarde" title="Réglages & sauvegarde" class="nav-item ${view === 'settings' ? 'active' : ''}">${icon('settings')}<span>Réglages & sauvegarde</span></a><div class="profile"><span class="avatar">M</span><div><strong>Maël</strong><span>Préparation à la soutenance</span></div><span class="local-dot" title="Application locale"></span></div></div></aside><div class="shell"><header class="topbar"><div class="topbar-heading">${sidebarToggle()}<span>MON PARCOURS <span class="topbar-divider">/</span> <strong>${h(nav.find(([id]) => id === view)?.[1] || (view === 'settings' ? 'Réglages' : 'Référentiel & dossiers'))}</strong></span></div><span class="date-label">${icon('calendar', 15)} ${h(new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }))}</span></header><main id="main" tabindex="-1">${({ today: dashboard, sheets, tech: coursesView, cards, oral, written: writtenView, exam: examView, settings, sources })[view]()}</main><footer class="footer"><span>Un concept compris. Un exemple concret. Un peu plus de confiance.</span><span><span class="little-dot"></span> Progression enregistrée dans ce navigateur</span></footer></div>`;
+  applySidebarState();
   if (storageError) { toast(storageError); storageError = ''; }
 }
 
@@ -212,6 +231,13 @@ function printSheets() {
 document.addEventListener('click', event => {
   const target = event.target.closest('[data-action]'); if (!target || target.disabled) return;
   const action = target.dataset.action;
+  if (action === 'sidebar-toggle') {
+    sidebarCollapsed = !sidebarCollapsed;
+    applySidebarState();
+    try { localStorage.setItem(SIDEBAR_STORAGE, String(sidebarCollapsed)); }
+    catch { toast('Le navigateur ne peut pas mémoriser le choix du menu.'); }
+    return;
+  }
   if (action === 'course-open') { selectedTechnology = target.dataset.id; query = ''; render(); window.scrollTo(0, 0); }
   if (action === 'course-section') { const section = document.getElementById(target.dataset.id); section?.scrollIntoView({ behavior: 'instant', block: 'start' }); section?.querySelector('h2')?.focus({ preventScroll: true }); }
   if (action === 'card-lesson') { const card = flashcards.find(item => item.id === target.dataset.id); if (card) { if (card.lessonTechnology || card.technology) { selectedTechnology = card.lessonTechnology || card.technology; pendingLesson = `course-section-${selectedTechnology}-${card.lessonIndex}`; go('tech'); } else { selectedSheet = card.lessonCp || card.cp; pendingLesson = `sheet-section-${selectedSheet}-${card.lessonIndex}`; go('sheets'); } } }

@@ -77,3 +77,10 @@ Cette vérification remplace les anciens exemples de cours liés aux projets per
 - `npm test` : 44 tests réussis. `npm run test:sources` : 7 références locales des dossiers et 4 documents présents. Syntaxe de `app.js`, cohérence des 302 lignes Anki et `git diff --check` vérifiées.
 - Des exemples Node.js, Vitest, Express/Zod, JWT et Prisma 6.19 ont été exécutés dans des ateliers temporaires. Sept snippets TypeScript ont été vérifiés avec le compilateur en mode strict ; les résultats de six requêtes SELECT ont été vérifiés avec SQLite sur le sous-ensemble commun indiqué. Cela ne constitue pas une exécution des DDL PostgreSQL ni des exemples Docker.
 - Capture locale de la section cardinalités : `pedagogie-merise.png` (ignorée par Git).
+
+## Barre latérale repliable — 8 octobre 2026
+
+- Le bouton du bandeau réduit la barre à 76 px sur ordinateur. Le contenu utilise l’espace libéré ; les liens gardent leurs noms accessibles et leurs infobulles. Le focus reste sur le bouton, dont le libellé et `aria-expanded` suivent l’état.
+- Le choix est conservé après rechargement et navigation. La préférence du menu est enregistrée séparément de la progression. Le repli modifie la mise en page sans recréer le contenu de la session.
+- À 320 px de viewport, le menu replié est masqué et le bouton permet de le rouvrir. Repli et dépliage ne créent aucun débordement horizontal ; le titre du bandeau est tronqué pour éviter de chevaucher la date. Le viewport normal a été rétabli.
+- Syntaxe JavaScript, `git diff --check` et les 44 tests existants vérifiés. Capture locale : `sidebar-repliee.png` (ignorée par Git).

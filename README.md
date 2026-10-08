@@ -18,6 +18,8 @@ npm start
 
 Adresse : **http://127.0.0.1:4173**. Garder la fenêtre Terminal ouverte. Pour arrêter, utiliser `Ctrl+C`.
 
+Le bouton en haut à gauche du contenu replie ou déplie la barre latérale. Sur ordinateur, les icônes de navigation restent disponibles ; sur mobile, le menu se masque. Le choix est mémorisé dans ce navigateur.
+
 Node.js 20 ou plus récent est nécessaire. **Aucune installation de dépendances ni aucun compte ne sont nécessaires.** Le site ne charge pas de ressources externes. Les liens d’approfondissement vers les documentations officielles nécessitent Internet si on les ouvre.
 
 Si le port est utilisé, vérifier si le site tourne déjà à cette adresse. Pour choisir un autre port : `CDA_PORT=4174 npm start`. La progression dépend de l’adresse du site : exporter sa sauvegarde avant de changer de port ou de navigateur.
