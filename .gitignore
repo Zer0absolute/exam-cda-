@@ -8,3 +8,5 @@ backups/
 documents/
 tests/*.jpg
 tests/*.png
+tmp/pdfs/
+__pycache__/

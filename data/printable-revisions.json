@@ -1,0 +1,2580 @@
+{
+  "chapters": [
+    {
+      "id": "merise",
+      "title": "Merise et conception",
+      "subtitle": "Comprendre les besoins, dessiner les données et construire un modèle relationnel — 8 leçons et 3 cheatsheets",
+      "lessons": [
+        {
+          "title": "1. Partir d’un besoin vérifiable",
+          "lead": "Un besoin décrit le résultat utile attendu. Un acteur est un rôle dans l’utilisation du système, par exemple visiteur, lecteur ou administrateur.",
+          "blocks": [
+            {
+              "type": "text",
+              "title": "La user story",
+              "text": "Une user story exprime un besoin du point de vue d’un acteur : « En tant que [acteur], je souhaite [action], afin de [bénéfice]. » Elle ouvre une discussion ; elle ne fixe pas à elle seule toutes les règles."
+            },
+            {
+              "type": "bullets",
+              "title": "Trois besoins d’une bibliothèque fictive",
+              "items": [
+                "En tant que visiteur, je souhaite rechercher un titre, afin de savoir si la bibliothèque possède le livre.",
+                "En tant que lecteur inscrit, je souhaite consulter mes prêts actifs, afin de connaître les exemplaires à rendre.",
+                "En tant qu’administrateur, je souhaite ajouter un exemplaire, afin de rendre une nouvelle copie disponible."
+              ]
+            },
+            {
+              "type": "table",
+              "title": "Critères d’acceptation : des résultats observables",
+              "headers": [
+                "Situation donnée",
+                "Résultat attendu"
+              ],
+              "rows": [
+                [
+                  "Titres : Le Phare et Les Jardins. Recherche : Phare.",
+                  "Seul Le Phare apparaît."
+                ],
+                [
+                  "Lina possède deux prêts actifs et un prêt rendu.",
+                  "Sa liste contient les deux prêts actifs."
+                ],
+                [
+                  "Le numéro d’inventaire 10 existe déjà.",
+                  "Un nouvel exemplaire portant 10 est refusé."
+                ]
+              ]
+            },
+            {
+              "type": "text",
+              "title": "De la règle aux données",
+              "text": "Une règle de gestion impose une obligation métier : « un exemplaire appartient à un seul livre ». Le modèle de données représente les objets et liens nécessaires. Un rôle d’acteur ne devient pas automatiquement une entité ou une table."
+            }
+          ],
+          "exercise": {
+            "question": "Un prêt peut être renouvelé une seule fois, pour sept jours. Écris un critère pour un prêt déjà renouvelé.",
+            "answer": "La demande est refusée et la date de retour reste inchangée. Le critère vérifie la limite d’un renouvellement."
+          },
+          "sources": [
+            "https://agilealliance.org/glossary/user-story-template/",
+            "https://lipn.univ-paris13.fr/~gerard/docs/cours/merise-slides.pdf"
+          ]
+        },
+        {
+          "title": "2. Définir les données et lire les cardinalités",
+          "lead": "Le dictionnaire des données précise le sens et les valeurs autorisées de chaque information. Le MCD, modèle conceptuel de données, représente les objets métier et leurs liens.",
+          "blocks": [
+            {
+              "type": "text",
+              "title": "Le vocabulaire du MCD",
+              "text": "Une entité est un type d’objet : LIVRE. Une occurrence est un objet précis : le livre 7. Un attribut décrit une propriété : titre. L’identifiant distingue chaque occurrence : livre_id. Une association exprime un lien : posséder. Une cardinalité indique le minimum et le maximum de participations d’une occurrence à ce lien."
+            },
+            {
+              "type": "table",
+              "title": "Petit dictionnaire",
+              "headers": [
+                "Donnée",
+                "Sens et domaine",
+                "Exemple"
+              ],
+              "rows": [
+                [
+                  "livre_id",
+                  "Identifiant unique ; entier positif.",
+                  "7"
+                ],
+                [
+                  "titre",
+                  "Titre du livre ; texte non vide.",
+                  "Le Phare"
+                ],
+                [
+                  "exemplaire_id",
+                  "Identifiant unique d’une copie ; entier positif.",
+                  "10"
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "title": "Les quatre cardinalités usuelles",
+              "headers": [
+                "Code",
+                "Minimum",
+                "Maximum",
+                "Lecture"
+              ],
+              "rows": [
+                [
+                  "0,1",
+                  "0",
+                  "1",
+                  "Facultatif ; au plus un lien."
+                ],
+                [
+                  "1,1",
+                  "1",
+                  "1",
+                  "Obligatoire ; exactement un lien."
+                ],
+                [
+                  "0,n",
+                  "0",
+                  "Plusieurs",
+                  "Facultatif ; plusieurs liens possibles."
+                ],
+                [
+                  "1,n",
+                  "1",
+                  "Plusieurs",
+                  "Obligatoire ; au moins un lien."
+                ]
+              ]
+            },
+            {
+              "type": "diagram",
+              "title": "Lire depuis chaque côté : un livre peut avoir zéro ou plusieurs copies ; chaque exemplaire appartient à exactement un livre",
+              "variant": "mcd"
+            }
+          ],
+          "exercise": {
+            "question": "Le livre 7 existe sans copie. L’exemplaire 10 existe sans livre. Lequel respecte ce MCD ?",
+            "answer": "Le livre sans copie est autorisé par 0,n. L’exemplaire sans livre est interdit par 1,1. La cardinalité proche d’une entité se lit depuis une occurrence de cette entité."
+          },
+          "sources": [
+            "https://pageperso.lis-lab.fr/bernard.espinasse/wp-content/uploads/2021/12/LivreMerisePDF-total-12sept14.pdf",
+            "https://laowantong.github.io/mocodo/doc/fr_refman.html"
+          ]
+        },
+        {
+          "title": "3. Préserver les liens : binaire ou ternaire ?",
+          "lead": "Une association binaire relie deux types d’entités dans un fait. Une association ternaire en relie trois ensemble : un enseignant enseigne une matière à une classe.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Les seuls faits autorisés dans cet exemple",
+              "headers": [
+                "Enseignant",
+                "Matière",
+                "Classe"
+              ],
+              "rows": [
+                [
+                  "Alice",
+                  "SQL",
+                  "C1"
+                ],
+                [
+                  "Alice",
+                  "JavaScript",
+                  "C2"
+                ],
+                [
+                  "Bob",
+                  "SQL",
+                  "C2"
+                ]
+              ]
+            },
+            {
+              "type": "diagram",
+              "title": "Trois listes de paires peuvent produire une affectation inventée : Alice–SQL–C2",
+              "variant": "ternary"
+            },
+            {
+              "type": "text",
+              "title": "Pourquoi le faux triplet passe-t-il ?",
+              "text": "Alice–SQL existe, Alice–C2 existe et SQL–C2 existe. Réunir ces trois paires semble donc autoriser Alice–SQL–C2. Pourtant, ce triplet n’est pas dans les faits. La projection en paires a perdu l’information sur leur combinaison exacte."
+            },
+            {
+              "type": "bullets",
+              "title": "Choisir le bon modèle",
+              "items": [
+                "Binaire : LIVRE possède EXEMPLAIRE ; chaque fait relie un livre et une copie.",
+                "Ternaire : AFFECTATION conserve enseignant, matière et classe dans le même fait.",
+                "Décomposition sans perte : les relations séparées permettent de reconstruire exactement les faits, sans faux ajout. Elle doit être justifiée par les règles, pas par un dessin plus simple."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Les paires pourraient-elles autoriser Bob–JavaScript–C2 ? Indique la paire manquante.",
+            "answer": "Non. Bob–JavaScript n’existe pas parmi les paires enseignant–matière. À l’inverse, les trois paires d’Alice–SQL–C2 existent bien, alors que le triplet complet est absent."
+          },
+          "sources": [
+            "https://pageperso.lis-lab.fr/bernard.espinasse/wp-content/uploads/2021/12/LivreMerisePDF-total-12sept14.pdf",
+            "https://cs.rpi.edu/~sibel/csci4380/fall2020/course_notes/normalization.html"
+          ]
+        },
+        {
+          "title": "4. Du MCD au MLD : 1:n et n:n",
+          "lead": "Le MCD décrit les objets et les règles, sans choisir un moteur de base. Le MLD, modèle logique de données, les traduit ici en relations : ensembles de lignes et de colonnes.",
+          "blocks": [
+            {
+              "type": "text",
+              "title": "Deux clés à comprendre",
+              "text": "Une clé primaire, notée PK, identifie une ligne sans doublon ni valeur absente. Une clé étrangère, notée FK, référence une clé d’une autre relation. Elle garantit l’existence de la valeur référencée ; elle n’impose pas toute seule toutes les règles métier."
+            },
+            {
+              "type": "diagram",
+              "title": "Conceptuel → logique → physique : trois niveaux de décision",
+              "variant": "models"
+            },
+            {
+              "type": "table",
+              "title": "Règles données et traduction",
+              "headers": [
+                "Lien",
+                "Règle de l’exemple",
+                "MLD"
+              ],
+              "rows": [
+                [
+                  "1:n",
+                  "Chaque exemplaire appartient à un livre. Un livre peut avoir zéro ou plusieurs copies.",
+                  "La FK livre_id va dans EXEMPLAIRE, le côté plusieurs."
+                ],
+                [
+                  "n:n",
+                  "Une commande contient un ou plusieurs produits. Un produit apparaît dans zéro ou plusieurs commandes. Au plus une ligne par couple.",
+                  "Créer LIGNE ; sa clé est le couple commande–produit."
+                ],
+                [
+                  "Attribut du lien",
+                  "Chaque ligne possède une quantité positive.",
+                  "quantite appartient à LIGNE, pas à PRODUIT."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "MLD en notation abrégée — pas encore du SQL",
+              "code": "LIVRE(livre_id PK, titre)\nEXEMPLAIRE(exemplaire_id PK, livre_id FK → LIVRE)\nCOMMANDE(commande_id PK)\nPRODUIT(produit_id PK)\nLIGNE(commande_id FK → COMMANDE,\n      produit_id FK → PRODUIT, quantite)\nPK de LIGNE = (commande_id, produit_id)"
+            }
+          ],
+          "exercise": {
+            "question": "Le livre 7 possède les copies 10 et 11. Quelles valeurs de livre_id trouve-t-on dans les deux lignes EXEMPLAIRE ?",
+            "answer": "Les deux lignes portent livre_id = 7. Les clés primaires exemplaire_id restent distinctes : 10 et 11."
+          },
+          "sources": [
+            "https://laowantong.github.io/mocodo/doc/fr_refman.html",
+            "https://www.postgresql.org/docs/current/ddl-constraints.html"
+          ]
+        },
+        {
+          "title": "5. Liens 1:1, ternaire et MPD PostgreSQL",
+          "lead": "Le MPD, modèle physique de données, choisit les types et contraintes d’un moteur précis. Les exemples suivants utilisent PostgreSQL et des identifiants entiers.",
+          "blocks": [
+            {
+              "type": "text",
+              "title": "Lire les contraintes avant le SQL",
+              "text": "INTEGER stocke un entier. PRIMARY KEY identifie chaque ligne. NOT NULL rend une valeur obligatoire. UNIQUE interdit un doublon. REFERENCES impose que la valeur référencée existe. CHECK vérifie une condition, par exemple une quantité positive ; ajouter NOT NULL si la valeur doit aussi être présente."
+            },
+            {
+              "type": "table",
+              "title": "Deux traductions particulières",
+              "headers": [
+                "Règle donnée",
+                "Traduction relationnelle"
+              ],
+              "rows": [
+                [
+                  "Une personne a zéro ou un dossier. Chaque dossier appartient à exactement une personne.",
+                  "DOSSIER porte personne_id : FK, NOT NULL et UNIQUE."
+                ],
+                [
+                  "Une affectation relie enseignant, matière et classe. Aucun triplet ne se répète ; aucune autre unicité n’est imposée.",
+                  "AFFECTATION porte trois FK. La clé primaire contient les trois identifiants."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Cas 1:1 : deux personnes, un premier dossier",
+              "code": "CREATE TABLE personne (\n  id INTEGER PRIMARY KEY\n);\nCREATE TABLE dossier (\n  id INTEGER PRIMARY KEY,\n  personne_id INTEGER NOT NULL UNIQUE\n    REFERENCES personne(id)\n);\nINSERT INTO personne VALUES (1), (2);\nINSERT INTO dossier VALUES (10, 1);"
+            },
+            {
+              "type": "bullets",
+              "title": "Ce que le MPD doit encore préciser",
+              "items": [
+                "Choisir les types des autres attributs et les règles de suppression des références.",
+                "Une FK ne garantit pas qu’un parent possède au moins un enfant : ce minimum demande un mécanisme supplémentaire.",
+                "Un index aide certaines lectures ; ce choix physique ne remplace pas une règle du MCD."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Prédis INSERT INTO dossier VALUES (11, 1), puis VALUES (12, 3), testés séparément après le code.",
+            "answer": "Le dossier 11 est refusé : personne_id = 1 existe déjà et doit être unique. Le dossier 12 est refusé : la personne 3 n’existe pas. La personne 2 peut rester sans dossier."
+          },
+          "sources": [
+            "https://laowantong.github.io/mocodo/doc/fr_refman.html",
+            "https://www.postgresql.org/docs/current/ddl-constraints.html"
+          ]
+        },
+        {
+          "title": "6. Dépendances, clés et première forme normale",
+          "lead": "Une dépendance fonctionnelle X → Y signifie qu’un ensemble d’attributs X détermine Y : deux lignes ayant le même X doivent avoir le même Y. Cette règle vaut dans tout état valide, pas seulement dans un échantillon.",
+          "blocks": [
+            {
+              "type": "text",
+              "title": "Les clés, sans raccourci",
+              "text": "Une superclé identifie une ligne. Une clé candidate est une superclé minimale : aucun attribut n’est superflu. On choisit l’une des candidates comme clé primaire. Exemple donné : CLIENT(client_id, email, nom), avec client_id unique, email unique et obligatoire, et nom non unique."
+            },
+            {
+              "type": "table",
+              "title": "Ce que les règles de CLIENT impliquent",
+              "headers": [
+                "Ensemble ou dépendance",
+                "Conclusion"
+              ],
+              "rows": [
+                [
+                  "{client_id} ; {email}",
+                  "Deux clés candidates."
+                ],
+                [
+                  "{client_id, nom}",
+                  "Superclé, mais pas minimale."
+                ],
+                [
+                  "client_id → email, nom",
+                  "L’identifiant détermine les autres attributs."
+                ],
+                [
+                  "nom → client_id",
+                  "Faux : plusieurs clients peuvent avoir le même nom."
+                ]
+              ]
+            },
+            {
+              "type": "text",
+              "title": "1NF : une valeur atomique par champ",
+              "text": "La première forme normale, 1NF, exclut les groupes répétés et les collections dans une cellule du modèle relationnel classique. Le domaine choisi ici est un seul numéro de téléphone par champ. Pour deux numéros, créer deux lignes TELEPHONE(client_id, numero), plutôt qu’un champ téléphones contenant une liste."
+            },
+            {
+              "type": "code",
+              "title": "Deux téléphones pour le client 1",
+              "code": "CLIENT :\nclient_id | email              | nom\n1         | lina@example.test  | Lina\nTELEPHONE :\nclient_id | numero\n1         | 0601\n1         | 0602"
+            }
+          ],
+          "exercise": {
+            "question": "Un échantillon présente trois noms différents. Peut-on en déduire que nom devient une clé candidate ?",
+            "answer": "Non. La règle autorise des homonymes. L’unicité observée dans cet échantillon ne garantit pas celle de tous les états valides."
+          },
+          "sources": [
+            "https://stph.scenari-community.org/bdd/nor1.pdf",
+            "https://cs.rpi.edu/~sibel/csci4380/fall2020/course_notes/normalization.html"
+          ]
+        },
+        {
+          "title": "7. Normaliser : 2NF, 3NF et BCNF",
+          "lead": "Normaliser réduit les répétitions qui provoquent des anomalies d’insertion, de modification ou de suppression. Un attribut premier appartient à au moins une clé candidate ; un attribut non premier n’appartient à aucune.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Conditions à vérifier sur les dépendances",
+              "headers": [
+                "Forme",
+                "Condition"
+              ],
+              "rows": [
+                [
+                  "2NF",
+                  "1NF ; aucun attribut non premier ne dépend d’une partie stricte d’une clé candidate."
+                ],
+                [
+                  "3NF",
+                  "Pour chaque X → A avec A hors de X : X est une superclé, ou A est premier."
+                ],
+                [
+                  "BCNF",
+                  "Pour chaque X → A avec A hors de X : X est une superclé. Aucune exception pour A premier."
+                ]
+              ]
+            },
+            {
+              "type": "text",
+              "title": "2NF : retirer une dépendance partielle",
+              "text": "LIGNE(commande, produit, libellé, quantité) a pour seule clé candidate (commande, produit). Règles : produit → libellé ; le couple → quantité. Le libellé dépend seulement d’une partie de la clé. Séparer PRODUIT(produit, libellé) et LIGNE(commande, produit, quantité)."
+            },
+            {
+              "type": "text",
+              "title": "3NF : retirer une dépendance transitive",
+              "text": "COMMANDE(commande, client, nom_client) a pour seule clé candidate commande. Règles : commande → client ; client → nom_client. Séparer CLIENT(client, nom_client) et COMMANDE(commande, client). Un nom client n’est plus répété à chaque commande."
+            },
+            {
+              "type": "text",
+              "title": "BCNF : une exigence plus forte",
+              "text": "Autre cas : AFFECTATION(élève, matière, professeur). Règles : (élève, matière) → professeur ; professeur → matière. Les candidates sont (élève, matière) et (élève, professeur). La relation respecte 3NF : matière est première. Elle viole BCNF : professeur n’est pas une superclé. Une décomposition doit vérifier reconstruction sans perte et conservation des dépendances."
+            }
+          ],
+          "exercise": {
+            "question": "Ajouter seulement un id artificiel à LIGNE corrige-t-il sa dépendance produit → libellé ?",
+            "answer": "Non. La dépendance reste vraie et le couple commande–produit reste une clé candidate si sa règle d’unicité est conservée. Il faut examiner toutes les clés candidates."
+          },
+          "sources": [
+            "https://stph.scenari-community.org/bdd/nor1.pdf",
+            "https://cs.rpi.edu/~sibel/csci4380/fall2020/course_notes/normalization.html"
+          ]
+        },
+        {
+          "title": "8. Cas d’utilisation UML : include et extend",
+          "lead": "UML est un langage de modélisation défini par l’OMG. Un cas d’utilisation décrit un service utile à un acteur ; un MCD Merise décrit les données et leurs relations.",
+          "blocks": [
+            {
+              "type": "text",
+              "title": "Le système et son scénario",
+              "text": "Système : distributeur bancaire. Acteur extérieur : client. Cas : Retirer de l’argent. Conditions de notre exemple : carte valide et solde suffisant. Le retrait vérifie toujours le code. Si le code est faux, aucun argent n’est délivré. Un reçu est proposé à un point du retrait et imprimé seulement sur demande ; le retrait reste complet sans reçu."
+            },
+            {
+              "type": "diagram",
+              "title": "Retirer inclut Vérifier le code ; Imprimer le reçu étend Retirer",
+              "variant": "usecases"
+            },
+            {
+              "type": "table",
+              "title": "Deux relations, deux directions",
+              "headers": [
+                "Relation",
+                "Sens de la flèche",
+                "Signification ici"
+              ],
+              "rows": [
+                [
+                  "include",
+                  "Retirer → Vérifier le code",
+                  "Le comportement inclus est exécuté dans le retrait."
+                ],
+                [
+                  "extend",
+                  "Imprimer le reçu → Retirer",
+                  "Extension conditionnelle à un point prévu du retrait."
+                ]
+              ]
+            },
+            {
+              "type": "bullets",
+              "title": "Décrire et vérifier le cas",
+              "items": [
+                "Délimiter le système ; nommer les acteurs et les objectifs, pas seulement les écrans.",
+                "Écrire préconditions, étapes, alternatives et résultat : code faux → retrait refusé.",
+                "Le cas étendu doit être complet sans son extension. La flèche de dépendance n’est pas une flèche de chronologie.",
+                "L’acteur Client n’impose pas automatiquement une nouvelle entité dans le MCD."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Nouvelle règle : un reçu est imprimé à chaque retrait. Quelle relation utiliser et dans quel sens ?",
+            "answer": "Retirer inclut Imprimer le reçu : la flèche include va de Retirer vers Imprimer le reçu. Le comportement appartient désormais à chaque retrait."
+          },
+          "sources": [
+            "https://www.omg.org/spec/UML/2.5.1"
+          ]
+        }
+      ],
+      "cheats": [
+        {
+          "title": "Cheatsheet 1 — Concevoir et lire les cardinalités",
+          "lead": "Partir des règles, puis représenter les objets et leurs liens. Lire chaque cardinalité depuis une occurrence de l’entité près de laquelle elle est écrite.",
+          "blocks": [
+            {
+              "type": "bullets",
+              "title": "Vocabulaire et point de départ",
+              "items": [
+                "Entité : type d’objet, comme LIVRE. Occurrence : livre précis, comme le livre 7.",
+                "Attribut : propriété, comme titre. Identifiant : valeur distinguant les occurrences, comme livre_id.",
+                "Association : lien entre objets. Dictionnaire : sens, domaine et obligations des données.",
+                "Story : En tant que [acteur], je souhaite [action], afin de [bénéfice]. Critère : situation précise → résultat vérifiable. Règle : obligation métier."
+              ]
+            },
+            {
+              "type": "table",
+              "title": "Minimum, maximum, signification",
+              "headers": [
+                "Cardinalité",
+                "Lecture pour une occurrence"
+              ],
+              "rows": [
+                [
+                  "0,1",
+                  "Facultatif ; au plus un lien."
+                ],
+                [
+                  "1,1",
+                  "Obligatoire ; exactement un lien."
+                ],
+                [
+                  "0,n",
+                  "Facultatif ; plusieurs liens possibles."
+                ],
+                [
+                  "1,n",
+                  "Obligatoire ; au moins un lien."
+                ]
+              ]
+            },
+            {
+              "type": "diagram",
+              "title": "LIVRE peut avoir zéro copie ; EXEMPLAIRE doit appartenir à un livre",
+              "variant": "mcd"
+            },
+            {
+              "type": "text",
+              "title": "Deux pièges à reconnaître",
+              "text": "Un acteur n’est pas automatiquement une entité. Une association binaire relie deux types d’entités ; une ternaire relie trois objets dans un même fait. Avec Alice–SQL–C1, Alice–JavaScript–C2 et Bob–SQL–C2, les paires seules peuvent inventer Alice–SQL–C2 : conserver le triplet ou prouver une décomposition sans perte."
+            }
+          ],
+          "sources": [
+            "https://laowantong.github.io/mocodo/doc/fr_refman.html",
+            "https://agilealliance.org/glossary/user-story-template/",
+            "https://cs.rpi.edu/~sibel/csci4380/fall2020/course_notes/normalization.html"
+          ]
+        },
+        {
+          "title": "Cheatsheet 2 — Traduire en MLD puis en MPD",
+          "lead": "MCD : objets et règles. MLD : relations et clés ; MPD : types, contraintes et choix du moteur.",
+          "blocks": [
+            {
+              "type": "text",
+              "title": "Les clés et leurs rôles",
+              "text": "PK, clé primaire : identifie une ligne. FK, clé étrangère : référence une clé existante. Dans les exemples ci-dessous, les identifiants sont entiers et une relation de liaison conserve un lien entre les autres relations."
+            },
+            {
+              "type": "table",
+              "title": "Quatre passages à mémoriser",
+              "headers": [
+                "Situation",
+                "Traduction"
+              ],
+              "rows": [
+                [
+                  "1:n : un livre possède plusieurs copies ; chaque copie a un livre.",
+                  "FK livre_id dans EXEMPLAIRE ; NOT NULL si obligatoire."
+                ],
+                [
+                  "n:n : commandes et produits ; au plus une ligne par couple.",
+                  "LIGNE avec deux FK ; PK du couple. Quantité dans LIGNE."
+                ],
+                [
+                  "1:1 : personne 0,1 ; dossier 1,1.",
+                  "FK personne_id dans DOSSIER, NOT NULL et UNIQUE."
+                ],
+                [
+                  "Ternaire : enseignant–matière–classe ; seul le triplet est unique.",
+                  "AFFECTATION avec trois FK ; PK des trois identifiants."
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "title": "Contraintes du MPD PostgreSQL",
+              "headers": [
+                "Écriture",
+                "Garantie"
+              ],
+              "rows": [
+                [
+                  "PRIMARY KEY",
+                  "Unicité et présence de l’identifiant."
+                ],
+                [
+                  "FOREIGN KEY / REFERENCES",
+                  "Existence de la valeur référencée."
+                ],
+                [
+                  "NOT NULL",
+                  "Valeur obligatoire."
+                ],
+                [
+                  "UNIQUE",
+                  "Absence de doublon selon la contrainte."
+                ],
+                [
+                  "CHECK (quantite > 0)",
+                  "Condition vraie ou inconnue ; ajouter NOT NULL pour interdire l’absence."
+                ]
+              ]
+            },
+            {
+              "type": "bullets",
+              "title": "Vérifications avant de créer les tables",
+              "items": [
+                "Nommer les types et les règles de suppression des références.",
+                "Une FK seule n’impose pas au parent d’avoir au moins un enfant.",
+                "Un prêt historique répété demande un identifiant d’événement ou une clé adaptée ; le seul couple lecteur–exemplaire peut être insuffisant."
+              ]
+            }
+          ],
+          "sources": [
+            "https://laowantong.github.io/mocodo/doc/fr_refman.html",
+            "https://www.postgresql.org/docs/current/ddl-constraints.html"
+          ]
+        },
+        {
+          "title": "Cheatsheet 3 — Normalisation et cas d’utilisation",
+          "lead": "Une dépendance fonctionnelle X → Y impose le même Y pour le même X. Les règles doivent rester vraies dans tous les états valides.",
+          "blocks": [
+            {
+              "type": "text",
+              "title": "Clés et attributs",
+              "text": "Superclé : ensemble identifiant une ligne. Candidate : superclé minimale. Primaire : candidate choisie. Attribut premier : appartient à au moins une candidate. Examiner toutes les candidates ; ajouter un id artificiel ne supprime pas les autres dépendances."
+            },
+            {
+              "type": "table",
+              "title": "Formes normales du modèle relationnel classique",
+              "headers": [
+                "Forme",
+                "Question de contrôle"
+              ],
+              "rows": [
+                [
+                  "1NF",
+                  "Une valeur atomique par champ, sans groupe répété ni collection ?"
+                ],
+                [
+                  "2NF",
+                  "1NF ; aucun non-premier dépend d’une partie stricte d’une candidate ?"
+                ],
+                [
+                  "3NF",
+                  "Pour X → A, A hors de X : X superclé ou A premier ?"
+                ],
+                [
+                  "BCNF",
+                  "Pour X → A, A hors de X : X toujours superclé ?"
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "title": "UML : objectifs d’acteurs, distincts du MCD",
+              "headers": [
+                "Lien",
+                "Flèche",
+                "Cas du distributeur"
+              ],
+              "rows": [
+                [
+                  "include",
+                  "Base → inclus",
+                  "Retirer → Vérifier le code ; inclus dans le retrait."
+                ],
+                [
+                  "extend",
+                  "Extension → base",
+                  "Reçu → Retirer ; sur demande, à un point prévu. Retrait complet sans reçu."
+                ]
+              ]
+            },
+            {
+              "type": "bullets",
+              "title": "Réflexes de correction",
+              "items": [
+                "Dépendance partielle : (commande, produit) → quantité, mais produit → libellé. Séparer PRODUIT et LIGNE.",
+                "Dépendance transitive : commande → client → nom. Séparer CLIENT et COMMANDE.",
+                "Après décomposition, vérifier reconstruction sans perte et conservation des dépendances : deux propriétés différentes.",
+                "Pour un cas d’utilisation, préciser acteur, préconditions, scénario, alternatives et résultat ; l’acteur ne devient pas automatiquement une table."
+              ]
+            }
+          ],
+          "sources": [
+            "https://stph.scenari-community.org/bdd/nor1.pdf",
+            "https://cs.rpi.edu/~sibel/csci4380/fall2020/course_notes/normalization.html",
+            "https://www.omg.org/spec/UML/2.5.1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "typescript",
+      "title": "TypeScript",
+      "subtitle": "Comprendre les types, contrôler une entrée, structurer une fonction.",
+      "lessons": [
+        {
+          "title": "1 · Des types pour relire le code avant son exécution",
+          "lead": "TypeScript ajoute un contrôle statique : il vérifie le code avant son exécution. Ses types sont ensuite effacés ; une donnée reçue doit encore être contrôlée pendant l’exécution.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Nommer la forme d’une valeur",
+              "headers": [
+                "Forme",
+                "Signification"
+              ],
+              "rows": [
+                [
+                  "number, string, boolean",
+                  "Nombre, texte, vrai/faux."
+                ],
+                [
+                  "string | null",
+                  "Texte ou absence : union de possibilités."
+                ],
+                [
+                  "interface Livre { titre: string }",
+                  "Forme d’un objet nommée Livre."
+                ],
+                [
+                  "type Code = string | number",
+                  "Nom réutilisable pour une union."
+                ],
+                [
+                  "string[] ; [string, number]",
+                  "Tableau de textes ; tuple à deux positions typées."
+                ],
+                [
+                  "readonly string[]",
+                  "Interdit la modification via cette référence ; pas un gel à l’exécution."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Programme TypeScript complet : exemple.ts",
+              "code": "interface Livre { titre: string; pages?: number }\ntype Position = [string, number];\nconst livre: Livre = { titre: 'Lire' };\nconst position: Position = ['rayon', 2];\nconst tags: readonly string[] = ['lecture'];\nconsole.log(livre.titre, position[1], tags[0]);\n// Attendu : Lire 2 lecture"
+            },
+            {
+              "type": "bullets",
+              "title": "Outils et contrat de lecture",
+              "items": [
+                "Dans un dossier d’essai : npm init -y, puis npm install -D typescript tsx.",
+                "npx tsc --strict --noEmit exemple.ts vérifie sans produire de JavaScript. strict renforce notamment les contrôles d’absences et de any implicites.",
+                "npx tsx exemple.ts exécute le programme ; tsx ne remplace pas la vérification tsc.",
+                "pages? est facultatif. Une interface décrit surtout un objet ; type peut aussi nommer union ou tuple. L’inférence déduit des types depuis les valeurs."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Que décrit [string, number] ? Le contrôle TypeScript prouve-t-il qu’un JSON reçu respecte Livre ?",
+            "answer": "Le tuple contient exactement deux positions typées : texte puis nombre. Non : les annotations ne contrôlent pas le JSON pendant l’exécution ; il faut vérifier ses champs et valeurs."
+          },
+          "sources": [
+            "https://www.typescriptlang.org/docs/handbook/2/basic-types.html",
+            "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html",
+            "https://www.typescriptlang.org/docs/handbook/2/objects.html",
+            "https://www.typescriptlang.org/tsconfig/",
+            "https://tsx.is/typescript"
+          ]
+        },
+        {
+          "title": "2 · Accepter une valeur inconnue, puis vérifier",
+          "lead": "Une entrée extérieure peut avoir n’importe quelle forme. unknown oblige à la vérifier ; une branche de code peut ensuite réduire les types possibles : c’est le narrowing.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Quatre notions à distinguer",
+              "headers": [
+                "Notion",
+                "Ce qu’elle fait"
+              ],
+              "rows": [
+                [
+                  "unknown",
+                  "Valeur inconnue ; vérifier avant une opération précise."
+                ],
+                [
+                  "any",
+                  "Désactive des contrôles utiles ; les erreurs restent possibles."
+                ],
+                [
+                  "value as Livre",
+                  "Affirme un type au compilateur ; ne transforme ni ne valide."
+                ],
+                [
+                  "typeof / instanceof / test d’un champ",
+                  "Réduit les possibilités dans la branche vérifiée."
+                ],
+                [
+                  "Union discriminée",
+                  "Variantes distinguées par un champ commun, comme status."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Programme complet : deux résultats possibles",
+              "code": "type Result =\n  | { status: 'ok'; data: string }\n  | { status: 'error'; message: string };\nfunction read(value: unknown): Result {\n  if (typeof value === 'string') {\n    return { status: 'ok', data: value.trim() };\n  }\n  return { status: 'error', message: 'Texte requis' };\n}\nconst result = read(12);\nif (result.status === 'ok') console.log(result.data);\nelse console.log(result.message);\n// Attendu : Texte requis"
+            },
+            {
+              "type": "bullets",
+              "title": "Passer d’une preuve à l’autre",
+              "items": [
+                "typeof value === 'string' permet trim dans cette branche : la valeur est un texte.",
+                "Tester status donne ensuite accès à data OU message selon la variante.",
+                "Pour un objet reçu en JSON : vérifier objet non nul, champs attendus, types et règles métier. Une quantité positive exige plus qu’un simple type number."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Avec read(' Alice '), quel résultat obtient-on ? Pourquoi result.message est-il incorrect dans la branche status === 'ok' ?",
+            "answer": "{ status: 'ok', data: 'Alice' }. La variante ok possède data, pas message ; le discriminant a précisément sélectionné cette forme."
+          },
+          "sources": [
+            "https://www.typescriptlang.org/docs/handbook/2/narrowing.html",
+            "https://www.typescriptlang.org/docs/handbook/2/functions.html",
+            "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html"
+          ]
+        },
+        {
+          "title": "3 · Réutiliser un type et attendre un calcul",
+          "lead": "Un générique conserve une relation entre types ; une fonction async retourne une Promise, représentant un résultat futur. Un module organise les exports et imports entre fichiers.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Types construits depuis User",
+              "headers": [
+                "Outil",
+                "Résultat"
+              ],
+              "rows": [
+                [
+                  "Partial<User>",
+                  "Toutes les propriétés deviennent facultatives."
+                ],
+                [
+                  "Pick<User, 'name'>",
+                  "Conserve uniquement name."
+                ],
+                [
+                  "Omit<User, 'id'>",
+                  "Retire id."
+                ],
+                [
+                  "Readonly<User>",
+                  "Interdit la réaffectation des propriétés par ce type."
+                ],
+                [
+                  "Record<string, number>",
+                  "Associe des clés textuelles à des nombres."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Programme en deux fichiers d’un dossier d’essai",
+              "code": "// users.ts\nexport type User = { id: number; name: string };\nexport function first<T>(values: readonly T[]): T | undefined {\n  return values[0];\n}\nexport async function count(users: readonly User[]): Promise<number> {\n  return users.length;\n}\n// main.ts\nimport { first, count } from './users.js';\nimport type { User } from './users.js';\nconst users: User[] = [{ id: 1, name: 'Alice' }];\nasync function main() {\n  console.log(first(users)?.name, await count(users));\n}\nmain(); // Attendu : Alice 1"
+            },
+            {
+              "type": "bullets",
+              "title": "Lire et exécuter",
+              "items": [
+                "T représente le type des éléments ; first garde ce type et prévoit undefined pour une liste vide.",
+                "await lit le résultat de la Promise dans une fonction async ; un rejet peut être traité avec try/catch. Vérifier error instanceof Error avant error.message si l’erreur est unknown.",
+                "import type importe une définition effacée à l’exécution. Le chemin users.js désigne le fichier JavaScript produit.",
+                "Après installation de TypeScript : npx tsc --strict --target ES2022 --module NodeNext --outDir dist main.ts, puis node dist/main.js."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Que retourne first<number>([]) ? Quel est le type de count(users) avant await ? Partial<User> valide-t-il un objet réseau ?",
+            "answer": "undefined ; Promise<number> ; non. Partial change une description statique, sans ajouter de validation à l’exécution."
+          },
+          "sources": [
+            "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+            "https://www.typescriptlang.org/docs/handbook/utility-types.html",
+            "https://www.typescriptlang.org/docs/handbook/2/modules.html",
+            "https://www.typescriptlang.org/docs/handbook/2/functions.html",
+            "https://www.typescriptlang.org/docs/handbook/2/narrowing.html"
+          ]
+        }
+      ],
+      "cheats": [
+        {
+          "title": "TypeScript · Mémo de lecture",
+          "lead": "Lire les types comme des possibilités, puis vérifier ce qui vient de l’extérieur.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Repères essentiels",
+              "headers": [
+                "À reconnaître",
+                "À expliquer"
+              ],
+              "rows": [
+                [
+                  "interface / type",
+                  "Forme d’objet ; alias possible pour objet, union, tuple."
+                ],
+                [
+                  "T[] / [A, B] / readonly",
+                  "Liste ; positions fixes ; modification interdite via ce type."
+                ],
+                [
+                  "unknown / any / as",
+                  "Vérifier ; retirer les contrôles ; affirmer sans valider."
+                ],
+                [
+                  "status: 'ok' | 'error'",
+                  "Discriminant : sélectionner la bonne variante."
+                ],
+                [
+                  "<T> / Partial / Pick / Omit",
+                  "Conserver une relation de types ; construire un type."
+                ],
+                [
+                  "async / await / import type",
+                  "Promise ; attendre son résultat ; import effacé."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Commandes dans un dossier d’essai",
+              "code": "npm install -D typescript tsx\nnpx tsc --strict --noEmit exemple.ts\nnpx tsx exemple.ts\n# Compilation et exécution de deux modules :\nnpx tsc --strict --target ES2022 --module NodeNext --outDir dist main.ts\nnode dist/main.js"
+            },
+            {
+              "type": "bullets",
+              "title": "Avant de dire « c’est sûr »",
+              "items": [
+                "Les types ne valident pas les données reçues et ne remplacent pas les tests.",
+                "Prévoir null, undefined, listes vides et erreurs ; vérifier le domaine métier.",
+                "strict peut être conservé dans tsconfig.json avec compilerOptions.strict: true.",
+                "Une assertion as contourne un contrôle : préférer une preuve réelle avec une garde."
+              ]
+            }
+          ],
+          "sources": [
+            "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html",
+            "https://www.typescriptlang.org/docs/handbook/2/narrowing.html",
+            "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+            "https://www.typescriptlang.org/docs/handbook/utility-types.html",
+            "https://www.typescriptlang.org/tsconfig/",
+            "https://tsx.is/typescript"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sql",
+      "title": "SQL et PostgreSQL",
+      "subtitle": "Lire les lignes, comprendre leurs liens et modifier sans perdre la cohérence.",
+      "lessons": [
+        {
+          "title": "1 · Tables, identifiants et intégrité",
+          "lead": "Une table possède des colonnes et des lignes. Notre jeu contient Alice avec deux commandes et Bilal avec aucune ; chaque commande doit référencer un client existant.",
+          "blocks": [
+            {
+              "type": "bullets",
+              "title": "Définir les règles avant les colonnes",
+              "items": [
+                "PRIMARY KEY identifie une ligne sans doublon ni NULL. FOREIGN KEY impose une référence existante.",
+                "NOT NULL impose une valeur ; UNIQUE interdit un doublon selon sa règle ; CHECK vérifie une condition.",
+                "CHECK(total >= 0) seul laisse passer NULL dans PostgreSQL : ajouter NOT NULL rend le total obligatoire.",
+                "Programme SQL autonome ci-dessous : exécuter dans une seule connexion PostgreSQL de test. TEMP crée des tables limitées à cette session."
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Créer notre petit jeu de données",
+              "code": "CREATE TEMP TABLE client (\n  id INTEGER PRIMARY KEY, nom TEXT NOT NULL\n);\nCREATE TEMP TABLE commande (\n  id INTEGER PRIMARY KEY,\n  client_id INTEGER NOT NULL REFERENCES client(id),\n  total NUMERIC NOT NULL CHECK (total >= 0)\n);\nINSERT INTO client VALUES (1, 'Alice'), (2, 'Bilal');\nINSERT INTO commande VALUES (10, 1, 30), (11, 1, 20);"
+            },
+            {
+              "type": "table",
+              "title": "Données obtenues",
+              "headers": [
+                "Table",
+                "Lignes"
+              ],
+              "rows": [
+                [
+                  "client",
+                  "(1, Alice) ; (2, Bilal)"
+                ],
+                [
+                  "commande",
+                  "(10, client 1, 30) ; (11, client 1, 20)"
+                ]
+              ]
+            },
+            {
+              "type": "text",
+              "title": "Ce qui est attendu",
+              "text": "Deux clients et deux commandes existent. Les deux références pointent vers Alice. Les colonnes décrivent les données ; les contraintes empêchent certains états interdits, même en dehors d’un formulaire."
+            }
+          ],
+          "exercise": {
+            "question": "Peut-on ajouter (12, 3, 15) dans commande ? Peut-on ajouter (12, 2, -1) ? Quelle règle bloque chaque tentative ?",
+            "answer": "Non : le client 3 n’existe pas, donc la clé étrangère bloque la première. Le total -1 viole CHECK(total >= 0), donc la seconde est refusée."
+          },
+          "sources": [
+            "https://www.postgresql.org/docs/current/ddl-constraints.html",
+            "https://www.postgresql.org/docs/current/tutorial-populate.html"
+          ]
+        },
+        {
+          "title": "2 · Lire, filtrer, trier et découper",
+          "lead": "SELECT décrit les valeurs à obtenir, FROM les fournit et WHERE filtre les lignes. Le jeu est redéclaré dans la requête : aucune table personnelle n’est nécessaire.",
+          "blocks": [
+            {
+              "type": "bullets",
+              "title": "Le chemin de lecture",
+              "items": [
+                "SELECT choisit les colonnes ; WHERE conserve les lignes dont la condition vaut vrai.",
+                "ORDER BY total DESC trie du plus grand au plus petit ; id départage un éventuel ex æquo.",
+                "LIMIT conserve un nombre maximal de lignes ; OFFSET ignore les premières lignes du résultat trié.",
+                "WITH nom(...) AS (VALUES ...) définit ici des données temporaires valables uniquement pour cette requête."
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Requête PostgreSQL autonome",
+              "code": "WITH client(id, nom) AS (VALUES (1, 'Alice'), (2, 'Bilal')),\ncommande(id, client_id, total) AS (\n  VALUES (10, 1, 30), (11, 1, 20)\n)\nSELECT id, total\nFROM commande\nWHERE total >= 20\nORDER BY total DESC, id\nLIMIT 1 OFFSET 1;"
+            },
+            {
+              "type": "table",
+              "title": "Résultat attendu",
+              "headers": [
+                "id",
+                "total"
+              ],
+              "rows": [
+                [
+                  "11",
+                  "20"
+                ]
+              ]
+            },
+            {
+              "type": "text",
+              "title": "Pourquoi ce résultat ?",
+              "text": "Le filtre garde 30 et 20. Le tri place 30 avant 20. OFFSET 1 ignore 30, puis LIMIT 1 conserve 20. Sans ordre défini, une pagination ne garantit pas une sélection stable."
+            }
+          ],
+          "exercise": {
+            "question": "Avec les mêmes données, remplace WHERE par total >= 25 et supprime LIMIT/OFFSET. Quelle ligne reste ?",
+            "answer": "La commande 10 avec total 30. La commande 11 vaut 20 et ne passe pas le filtre."
+          },
+          "sources": [
+            "https://www.postgresql.org/docs/current/tutorial-select.html",
+            "https://www.postgresql.org/docs/current/queries-order.html",
+            "https://www.postgresql.org/docs/current/queries-limit.html"
+          ]
+        },
+        {
+          "title": "3 · Joindre, comprendre NULL et compter",
+          "lead": "Une jointure rapproche les lignes de tables liées. LEFT JOIN garde aussi un client sans commande ; les colonnes de la commande valent alors NULL, l’absence de valeur.",
+          "blocks": [
+            {
+              "type": "bullets",
+              "title": "Éviter les pièges",
+              "items": [
+                "INNER JOIN garde seulement les correspondances ; LEFT JOIN garde aussi les lignes de gauche sans correspondance.",
+                "COUNT(co.id) compte les identifiants non NULL : Alice 2, Bilal 0. COUNT(*) compterait aussi la ligne conservée pour Bilal.",
+                "GROUP BY forme les groupes ; WHERE filtre avant, HAVING après le regroupement.",
+                "NULL se teste avec IS NULL, jamais = NULL. COALESCE prend la première valeur non NULL ; ici il remplace une somme absente par 0."
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Requête autonome : une ligne par client",
+              "code": "WITH client(id, nom) AS (VALUES (1, 'Alice'), (2, 'Bilal')),\ncommande(id, client_id, total) AS (\n  VALUES (10, 1, 30), (11, 1, 20)\n)\nSELECT c.nom, COUNT(co.id) AS commandes,\n       COALESCE(SUM(co.total), 0) AS total\nFROM client c\nLEFT JOIN commande co ON co.client_id = c.id\nGROUP BY c.id, c.nom\nORDER BY c.id;"
+            },
+            {
+              "type": "table",
+              "title": "Résultat attendu",
+              "headers": [
+                "nom",
+                "commandes",
+                "total"
+              ],
+              "rows": [
+                [
+                  "Alice",
+                  "2",
+                  "50"
+                ],
+                [
+                  "Bilal",
+                  "0",
+                  "0"
+                ]
+              ]
+            },
+            {
+              "type": "text",
+              "title": "Lire la ligne vide",
+              "text": "La jointure fabrique deux correspondances pour Alice et conserve une ligne sans commande pour Bilal. Cette absence n’est pas un total nul : SUM ne trouve aucune valeur, puis COALESCE fournit 0."
+            }
+          ],
+          "exercise": {
+            "question": "Ajoute HAVING COUNT(co.id) >= 2 avant ORDER BY. Qui reste ? Pour Bilal, que donnerait COUNT(*) sans cette condition ?",
+            "answer": "Seule Alice reste, avec 2 commandes et total 50. COUNT(*) donnerait 1 pour Bilal à cause de la ligne conservée par LEFT JOIN."
+          },
+          "sources": [
+            "https://www.postgresql.org/docs/current/tutorial-join.html",
+            "https://www.postgresql.org/docs/current/functions-comparison.html",
+            "https://www.postgresql.org/docs/current/tutorial-agg.html",
+            "https://www.postgresql.org/docs/current/functions-conditional.html"
+          ]
+        },
+        {
+          "title": "4 · Existence, modifications et travail fiable",
+          "lead": "EXISTS teste si une sous-requête trouve au moins une ligne. Nous gardons clients (1, Alice), (2, Bilal) et commandes (10, 1, 30), (11, 1, 20).",
+          "blocks": [
+            {
+              "type": "code",
+              "title": "Lecture autonome : clients ayant une commande",
+              "code": "WITH client(id, nom) AS (VALUES (1, 'Alice'), (2, 'Bilal')),\ncommande(id, client_id, total) AS (\n  VALUES (10, 1, 30), (11, 1, 20)\n)\nSELECT c.nom FROM client c\nWHERE EXISTS (\n  SELECT 1 FROM commande co WHERE co.client_id = c.id\n);\n-- Attendu : Alice, une seule fois."
+            },
+            {
+              "type": "table",
+              "title": "Modifier et vérifier",
+              "headers": [
+                "Outil",
+                "Sens"
+              ],
+              "rows": [
+                [
+                  "INSERT ... RETURNING id",
+                  "Ajouter et récupérer l’identifiant de sa ligne."
+                ],
+                [
+                  "UPDATE / DELETE + WHERE",
+                  "Modifier / supprimer les lignes ciblées."
+                ],
+                [
+                  "Paramètres ($1, valeurs séparées)",
+                  "Séparer une valeur du code SQL ; pas un nom de colonne."
+                ],
+                [
+                  "BEGIN / COMMIT / ROLLBACK",
+                  "Débuter / valider / annuler une transaction."
+                ],
+                [
+                  "Index",
+                  "Accélérer certains accès, avec coût d’espace et d’écriture."
+                ],
+                [
+                  "EXPLAIN / EXPLAIN ANALYZE",
+                  "Plan estimé / exécution mesurée, donc effets réels possibles."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Fragment à lire : tables et données décrites ci-dessus",
+              "code": "BEGIN;\nUPDATE commande SET total = 99 WHERE id = 10;\nROLLBACK;\n-- Après annulation : commande 10 vaut toujours 30.\n-- Pilote applicatif : SQL '... WHERE id = $1', valeurs [10].\n-- Un nom de colonne dynamique vient d’une liste autorisée."
+            },
+            {
+              "type": "text",
+              "title": "Relier l’outil au besoin",
+              "text": "Une transaction regroupe des changements qui doivent être validés ensemble. Avant UPDATE/DELETE, vérifier les lignes visées. Ajouter un index selon les requêtes observées ; un index ne rend pas forcément chaque requête plus rapide."
+            }
+          ],
+          "exercise": {
+            "question": "Après le fragment, quelle valeur conserve la commande 10 ? Un UPDATE sans WHERE viserait combien de commandes ici ?",
+            "answer": "30 : ROLLBACK annule 99. Sans WHERE, UPDATE viserait les deux commandes de cet exemple."
+          },
+          "sources": [
+            "https://www.postgresql.org/docs/current/functions-subquery.html",
+            "https://www.postgresql.org/docs/current/sql-prepare.html",
+            "https://www.postgresql.org/docs/current/tutorial-transactions.html",
+            "https://www.postgresql.org/docs/current/dml-returning.html",
+            "https://www.postgresql.org/docs/current/tutorial-update.html",
+            "https://www.postgresql.org/docs/current/tutorial-delete.html",
+            "https://www.postgresql.org/docs/current/indexes.html",
+            "https://www.postgresql.org/docs/current/using-explain.html"
+          ]
+        }
+      ],
+      "cheats": [
+        {
+          "title": "SQL · Mémo de lecture et de contrôle",
+          "lead": "Demander quelles lignes chaque étape conserve, puis expliquer l’intégrité et les effets d’une écriture.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Repères",
+              "headers": [
+                "Écriture",
+                "Question"
+              ],
+              "rows": [
+                [
+                  "PK / FK / NOT NULL / UNIQUE / CHECK",
+                  "Identité ? Référence ? Présence ? Doublon ? Règle ?"
+                ],
+                [
+                  "SELECT / WHERE / ORDER BY / LIMIT / OFFSET",
+                  "Quelles colonnes, lignes, ordre et page ?"
+                ],
+                [
+                  "INNER / LEFT JOIN ; IS NULL",
+                  "Correspondances seules ou lignes absentes conservées ?"
+                ],
+                [
+                  "COUNT(col) / GROUP BY / HAVING",
+                  "Quelles valeurs non NULL et quels groupes ?"
+                ],
+                [
+                  "EXISTS / paramètres / RETURNING",
+                  "Une ligne existe ? Valeur séparée ? Résultat de ma mutation ?"
+                ],
+                [
+                  "Transaction / index / EXPLAIN",
+                  "Atomicité ? Coût des accès ? Plan prévu ou mesuré ?"
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Fragment à lire avec une commande id 10, total 30",
+              "code": "BEGIN;\nUPDATE commande SET total = 40 WHERE id = 10;\nROLLBACK; -- Le total revient à 30.\n-- Lire avec des paramètres :\n-- SELECT id, total FROM commande WHERE id = $1\n-- Fournir [10] au pilote, sans concaténation."
+            },
+            {
+              "type": "bullets",
+              "title": "Questions de vérification",
+              "items": [
+                "LEFT JOIN : une ligne sans enfant n’est pas un enfant à compter.",
+                "CHECK ne rend pas automatiquement un champ obligatoire ; ajouter NOT NULL.",
+                "WHERE filtre les lignes ; HAVING filtre les groupes. COALESCE ne confond pas 0 et NULL.",
+                "EXPLAIN ANALYZE exécute réellement ; une mutation mesurée peut changer les données.",
+                "Un index accélère certains accès mais consomme de l’espace et ralentit certaines écritures."
+              ]
+            }
+          ],
+          "sources": [
+            "https://www.postgresql.org/docs/current/ddl-constraints.html",
+            "https://www.postgresql.org/docs/current/tutorial-select.html",
+            "https://www.postgresql.org/docs/current/tutorial-join.html",
+            "https://www.postgresql.org/docs/current/tutorial-agg.html",
+            "https://www.postgresql.org/docs/current/functions-comparison.html",
+            "https://www.postgresql.org/docs/current/functions-conditional.html",
+            "https://www.postgresql.org/docs/current/functions-subquery.html",
+            "https://www.postgresql.org/docs/current/tutorial-transactions.html",
+            "https://www.postgresql.org/docs/current/sql-prepare.html",
+            "https://www.postgresql.org/docs/current/indexes.html",
+            "https://www.postgresql.org/docs/current/using-explain.html"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "title": "Docker : exécuter et relier des applications",
+      "subtitle": "Comprendre les images, les ports et la conservation des données.",
+      "lessons": [
+        {
+          "title": "De l’image au conteneur",
+          "lead": "Une image est un paquet de fichiers et de réglages. Un conteneur est une exécution isolée de cette image ; un Dockerfile décrit sa fabrication.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Lire les instructions",
+              "headers": [
+                "Instruction",
+                "Rôle"
+              ],
+              "rows": [
+                [
+                  "FROM",
+                  "Choisir l’image de base."
+                ],
+                [
+                  "WORKDIR",
+                  "Fixer le dossier de travail."
+                ],
+                [
+                  "COPY",
+                  "Copier des fichiers dans l’image."
+                ],
+                [
+                  "RUN",
+                  "Exécuter pendant la fabrication."
+                ],
+                [
+                  "CMD",
+                  "Définir la commande de démarrage."
+                ],
+                [
+                  "EXPOSE",
+                  "Documenter un port ; ne pas le publier."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Deux fichiers et des commandes : séparer les trois parties",
+              "code": "# api.mjs : exclure cette ligne de titre\nimport { createServer } from \"node:http\";\ncreateServer((req, res) => {\n  res.setHeader(\"Content-Type\", \"application/json\");\n  res.end('{\"ok\":true}');\n}).listen(3000, \"0.0.0.0\");\n# Dockerfile : exclure cette ligne de titre\nFROM node:22-alpine\nWORKDIR /app\nCOPY api.mjs .\nRUN node --check api.mjs\nCMD [\"node\", \"api.mjs\"]\n# Terminal, depuis le dossier des deux fichiers\ndocker build -t atelier-api .\ndocker run --name api -p 127.0.0.1:8080:3000 atelier-api"
+            },
+            {
+              "type": "text",
+              "title": "Pratiquer et vérifier",
+              "text": "Prérequis : Docker installé et démarré, Internet pour l’image de base, port 8080 libre. Créer api.mjs et Dockerfile dans un dossier vide. build fabrique l’image ; run crée et démarre le conteneur. Ouvrir http://127.0.0.1:8080 : réponse attendue {\"ok\":true}. Un port déjà occupé fait échouer run."
+            },
+            {
+              "type": "bullets",
+              "title": "Ce qui mérite d’être retenu",
+              "items": [
+                "RUN vérifie ici la syntaxe du fichier ; CMD démarre le serveur plus tard.",
+                "Le cache réutilise des étapes inchangées. Copier les fichiers de dépendances avant les sources limite les réinstallations.",
+                ".dockerignore exclut des fichiers du build. Ne pas copier de secret dans l’image."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Ajouter EXPOSE 3000 au Dockerfile rend-il le serveur accessible sur le port 8080 de la machine ?",
+            "answer": "Non. EXPOSE documente le port interne. La publication vient de -p : 8080 sur la machine dirige vers 3000 dans le conteneur."
+          },
+          "sources": [
+            "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/",
+            "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/",
+            "https://docs.docker.com/reference/dockerfile/",
+            "https://docs.docker.com/get-started/docker-concepts/building-images/using-the-build-cache/"
+          ]
+        },
+        {
+          "title": "Ports, réseau Compose et données persistantes",
+          "lead": "Compose décrit plusieurs services et leur réseau. Un volume nommé conserve des fichiers indépendamment du conteneur qui les a écrits.",
+          "blocks": [
+            {
+              "type": "diagram",
+              "variant": "docker"
+            },
+            {
+              "type": "table",
+              "title": "Choisir l’adresse depuis le bon endroit",
+              "headers": [
+                "Programme appelant",
+                "Destination"
+              ],
+              "rows": [
+                [
+                  "Navigateur sur la machine",
+                  "API : localhost:8080"
+                ],
+                [
+                  "API dans Compose",
+                  "PostgreSQL : db:5432"
+                ],
+                [
+                  "Outil SQL sur la machine",
+                  "PostgreSQL : localhost:15432"
+                ],
+                [
+                  "localhost dans api",
+                  "Le conteneur api lui-même"
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "compose.yaml : lecture du réseau et du stockage",
+              "code": "services:\n  api:\n    image: atelier-api\n    ports: [\"127.0.0.1:8080:3000\"]\n  db:\n    image: postgres:17\n    environment:\n      POSTGRES_PASSWORD: exemple-local\n    ports: [\"127.0.0.1:15432:5432\"]\n    volumes: [\"records:/var/lib/postgresql/data\"]\nvolumes:\n  records:"
+            },
+            {
+              "type": "bullets",
+              "title": "Lancer, diagnostiquer, conserver",
+              "items": [
+                "atelier-api est l’image de la page précédente. Cette API répond en JSON mais ne lit pas encore la base ; db:5432 est l’adresse qu’elle utiliserait.",
+                "Arrêter le conteneur précédent avec Ctrl+C dans son terminal ou docker stop api depuis un autre terminal : cela libère 8080. Depuis le dossier de compose.yaml : docker compose up -d, puis docker compose ps et docker compose logs api db. La base accepte postgres avec le mot de passe d’exemple.",
+                "depends_on simple attend le démarrage, pas la disponibilité. service_healthy attend un healthcheck initial ; l’application gère ensuite les pannes.",
+                "records conserve les fichiers de PostgreSQL. down conserve les volumes nommés ; down -v les supprime. Un volume ne remplace pas une sauvegarde."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Retirer la publication 15432:5432 empêche-t-il api de joindre db ? Et l’outil SQL sur la machine ?",
+            "answer": "api utilise toujours db:5432 sur le réseau Compose. L’outil sur la machine perd cet accès publié : localhost:15432 n’atteint plus db."
+          },
+          "sources": [
+            "https://docs.docker.com/compose/how-tos/networking/",
+            "https://docs.docker.com/engine/storage/volumes/",
+            "https://docs.docker.com/compose/how-tos/startup-order/",
+            "https://docs.docker.com/reference/cli/docker/compose/down/"
+          ]
+        }
+      ],
+      "cheats": [
+        {
+          "title": "Mémo Docker",
+          "lead": "Image = paquet ; conteneur = instance ; volume = stockage indépendant. Avant une commande, repérer sa cible.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Commandes et résultats",
+              "headers": [
+                "Commande",
+                "Effet"
+              ],
+              "rows": [
+                [
+                  "docker build -t atelier-api .",
+                  "Fabriquer une image depuis le dossier."
+                ],
+                [
+                  "docker run --name api atelier-api",
+                  "Créer et démarrer un conteneur."
+                ],
+                [
+                  "docker ps -a / docker logs api",
+                  "Voir les états / lire les messages."
+                ],
+                [
+                  "docker stop api / docker start api",
+                  "Arrêter / redémarrer le même conteneur."
+                ],
+                [
+                  "docker compose up -d / ps",
+                  "Lancer les services / examiner leurs états."
+                ],
+                [
+                  "docker compose down",
+                  "Retirer conteneurs et réseau ; garder les volumes nommés."
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "title": "Un port se lit hôte → conteneur",
+              "headers": [
+                "Contexte",
+                "Adresse"
+              ],
+              "rows": [
+                [
+                  "Publication API 8080:3000",
+                  "Machine : localhost:8080"
+                ],
+                [
+                  "API vers le service db",
+                  "db:5432"
+                ],
+                [
+                  "Publication DB 15432:5432",
+                  "Machine : localhost:15432"
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Ordre usuel avec des dépendances npm",
+              "code": "FROM node:22-alpine\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .\nCMD [\"node\", \"api.mjs\"]"
+            },
+            {
+              "type": "bullets",
+              "title": "Pièges fréquents",
+              "items": [
+                "Fragment ci-dessus : suppose des fichiers npm cohérents et api.mjs ; il illustre le cache.",
+                "RUN agit au build ; CMD au démarrage. EXPOSE ne publie aucun port.",
+                "localhost dans un conteneur vise ce conteneur. Une base démarrée peut encore être indisponible.",
+                "Volume nommé : persistance, pas historique de sauvegarde. down -v supprime ses données.",
+                "Erreur réseau : vérifier état, logs, nom du service, port interne et configuration."
+              ]
+            }
+          ],
+          "sources": [
+            "https://docs.docker.com/reference/dockerfile/",
+            "https://docs.docker.com/compose/how-tos/networking/",
+            "https://docs.docker.com/engine/storage/volumes/",
+            "https://docs.docker.com/reference/cli/docker/compose/down/"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tests",
+      "title": "Tests JavaScript : vérifier un comportement",
+      "subtitle": "Passer de la règle à un résultat attendu, puis tester les échanges.",
+      "lessons": [
+        {
+          "title": "Une règle, des limites et une assertion",
+          "lead": "Un test automatisé exécute une action puis vérifie son résultat. Une assertion est la vérification ; le test runner organise l’exécution des tests.",
+          "blocks": [
+            {
+              "type": "diagram",
+              "variant": "tests"
+            },
+            {
+              "type": "table",
+              "title": "Règle : accepter exactement les entiers de 1 à 5",
+              "headers": [
+                "Entrée",
+                "Résultat attendu"
+              ],
+              "rows": [
+                [
+                  "0",
+                  "false : sous la limite"
+                ],
+                [
+                  "1",
+                  "true : borne incluse"
+                ],
+                [
+                  "3",
+                  "true : intérieur"
+                ],
+                [
+                  "5",
+                  "true : borne incluse"
+                ],
+                [
+                  "6",
+                  "false : au-dessus"
+                ],
+                [
+                  "\"3\", 1.5 ou NaN",
+                  "false : pas un entier admis"
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Node 22+ : quantite.test.mjs, puis node --test quantite.test.mjs",
+              "code": "import test from \"node:test\";\nimport assert from \"node:assert/strict\";\nconst acceptQuantity = value =>\n  Number.isInteger(value) && value >= 1 && value <= 5;\ntest(\"refuse zéro\", () => {\n  const value = 0; // Arrange : préparer\n  const actual = acceptQuantity(value); // Act : agir\n  assert.strictEqual(actual, false); // Assert : vérifier\n});"
+            },
+            {
+              "type": "bullets",
+              "title": "Comprendre ce que le test prouve",
+              "items": [
+                "Résultat attendu : un test réussit. Ajouter les cas du tableau, chacun avec son attendu ; un seul cas ne prouve pas toutes les limites.",
+                "Unitaire : une unité de logique. Intégration : coopération entre composants. E2E : parcours utilisateur complet.",
+                "strictEqual compare ici un booléen ; deepStrictEqual compare la structure d’un tableau ou objet.",
+                "Les données préparées sont des fixtures. Un double remplace une dépendance pour contrôler son résultat ; il ne vérifie pas cette dépendance réelle."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "La règle devient « entiers de 2 à 8 inclus ». Quelles quatre valeurs prennent les bornes et leurs voisins extérieurs ?",
+            "answer": "1, 2, 8 et 9. Les attendus sont false, true, true, false. Ajouter d’autres classes comme une chaîne et un nombre décimal."
+          },
+          "sources": [
+            "https://nodejs.org/api/test.html",
+            "https://nodejs.org/api/assert.html",
+            "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices"
+          ]
+        },
+        {
+          "title": "Attendre, tester HTTP et nettoyer",
+          "lead": "Une promesse représente un résultat futur ; await l’attend. Ce test d’intégration vérifie le statut et le corps d’une réponse HTTP réelle.",
+          "blocks": [
+            {
+              "type": "code",
+              "title": "Node 22+ : http.test.mjs, puis node --test http.test.mjs",
+              "code": "import test from \"node:test\";\nimport assert from \"node:assert/strict\";\nimport { createServer } from \"node:http\";\nimport { once } from \"node:events\";\ntest(\"GET /tasks/1\", async t => {\n  const server = createServer((req, res) => {\n    const found = req.method === \"GET\" && req.url === \"/tasks/1\";\n    res.writeHead(found ? 200 : 404, {\"Content-Type\":\"application/json\"});\n    res.end(JSON.stringify(found ? {id:1,title:\"Lire\"} : {error:\"Absente\"})); });\n  t.after(() => new Promise(resolve => server.close(resolve)));\n  server.listen(0, \"127.0.0.1\"); await once(server, \"listening\");\n  const url = \"http://127.0.0.1:\" + server.address().port;\n  const response = await fetch(url + \"/tasks/1\");\n  assert.strictEqual(response.status, 200);\n  assert.deepStrictEqual(await response.json(), {id:1,title:\"Lire\"});\n});"
+            },
+            {
+              "type": "bullets",
+              "title": "Lire le scénario",
+              "items": [
+                "Fixture fournie : GET /tasks/1 → 200 et {id:1,title:\"Lire\"} ; autre route → 404 et {error:\"Absente\"}.",
+                "listen(0) choisit un port libre ; listening attend le démarrage. t.after ferme le serveur après le test.",
+                "fetch ne rejette pas automatiquement sur 404 : vérifier statut et corps, avec await.",
+                "Intégration avec une base : données connues réinitialisées, base dédiée et connexions libérées."
+              ]
+            },
+            {
+              "type": "table",
+              "title": "Deux outils, mêmes intentions",
+              "headers": [
+                "Vérification",
+                "Node assert",
+                "Vitest expect"
+              ],
+              "rows": [
+                [
+                  "Valeur simple",
+                  "strictEqual(a, b)",
+                  "toBe(b)"
+                ],
+                [
+                  "Structure",
+                  "deepStrictEqual(a, b)",
+                  "toEqual(b)"
+                ],
+                [
+                  "Promesse rejetée",
+                  "await rejects(fn, motif)",
+                  "await expect(p).rejects.toThrow(motif)"
+                ]
+              ]
+            },
+            {
+              "type": "text",
+              "title": "TDD : construire avec le test",
+              "text": "TDD : Red, test en échec ; Green, code qui le fait passer ; Refactor, amélioration sans changer le comportement. Vitest lance une suite équipée avec npx vitest run."
+            }
+          ],
+          "exercise": {
+            "question": "GET /tasks/99 : quels deux attendus vérifier ? Quel niveau de test est-ce ?",
+            "answer": "404 et {error:\"Absente\"}. Ce test d’intégration vérifie l’échange entre serveur et client HTTP ; aucune base externe n’intervient."
+          },
+          "sources": [
+            "https://nodejs.org/api/test.html",
+            "https://nodejs.org/api/assert.html",
+            "https://nodejs.org/api/http.html",
+            "https://vitest.dev/guide/",
+            "https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions-1/contact-manager/iteration-6-use-test-driven-development-cs"
+          ]
+        }
+      ],
+      "cheats": [
+        {
+          "title": "Mémo tests JavaScript",
+          "lead": "Préparer un contexte connu, exercer le comportement, comparer à un attendu issu de la règle.",
+          "blocks": [
+            {
+              "type": "diagram",
+              "variant": "tests"
+            },
+            {
+              "type": "table",
+              "title": "Assertions à choisir",
+              "headers": [
+                "Intention",
+                "Node",
+                "Vitest"
+              ],
+              "rows": [
+                [
+                  "Valeur / identité",
+                  "assert.strictEqual",
+                  "expect(...).toBe"
+                ],
+                [
+                  "Objet ou tableau",
+                  "assert.deepStrictEqual",
+                  "expect(...).toEqual"
+                ],
+                [
+                  "Exception immédiate",
+                  "assert.throws",
+                  "expect(fn).toThrow"
+                ],
+                [
+                  "Rejet asynchrone",
+                  "await assert.rejects",
+                  "await expect(p).rejects.toThrow"
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Vitest préinstallé : titres.test.mjs, puis npx vitest run",
+              "code": "import { test, expect } from \"vitest\";\nconst pending = tasks => tasks.filter(t => !t.done);\ntest(\"garde les tâches non terminées\", () => {\n  const tasks = [{id:1, done:false}, {id:2, done:true}];\n  const result = pending(tasks);\n  expect(result).toEqual([{id:1, done:false}]);\n});"
+            },
+            {
+              "type": "bullets",
+              "title": "Routine de vérification",
+              "items": [
+                "AAA : Arrange = contexte ; Act = appel ; Assert = attendu.",
+                "Cas : succès, absence, bornes, valeurs invalides, erreurs et permissions.",
+                "HTTP : vérifier statut et corps. await attend la requête et ses assertions.",
+                "Fixtures isolées ; doubles pour la logique ; vraie base dédiée pour l’intégration. Nettoyer avec after/afterEach ou t.after.",
+                "TDD : Red → Green → Refactor. Une correction de bug mérite un test de non-régression.",
+                "Couverture élevée : code parcouru ; elle ne garantit pas la qualité des assertions."
+              ]
+            }
+          ],
+          "sources": [
+            "https://nodejs.org/api/test.html",
+            "https://nodejs.org/api/assert.html",
+            "https://vitest.dev/api/expect.html",
+            "https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions-1/contact-manager/iteration-6-use-test-driven-development-cs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "title": "Backend : traiter une demande et protéger les données",
+      "subtitle": "HTTP, responsabilités, validation, permissions et accès à la base.",
+      "lessons": [
+        {
+          "title": "La requête traverse des responsabilités",
+          "lead": "Une API est un point d’accès offert par un serveur ; une route associe une méthode HTTP à un chemin. Node exécute JavaScript et Express organise le traitement des requêtes.",
+          "blocks": [
+            {
+              "type": "diagram",
+              "variant": "request"
+            },
+            {
+              "type": "bullets",
+              "title": "Avant le code",
+              "items": [
+                "Exemple autonome : Node 22+, Express 5 installé avec npm install express@5 ; enregistrer api.mjs, puis node api.mjs.",
+                "Middleware : étape qui répond ou appelle next(). Décoder le JSON avant les routes ; terminer par le traitement des erreurs.",
+                "Contrôleur : adapter req et res ; service : appliquer ou orchestrer les règles ; repository : lire et écrire les données. Ici, le repository utilise un tableau."
+              ]
+            },
+            {
+              "type": "code",
+              "title": "api.mjs : une tâche et trois réponses possibles",
+              "code": "import express from \"express\";\nconst app = express();\napp.use(express.json());\nconst tasks = [{id:1, title:\"Lire\"}];\nconst repo = { find: id => tasks.find(t => t.id === id) };\nconst service = id => repo.find(id);\napp.get(\"/tasks/:id\", (req, res) => {\n  const id = Number(req.params.id);\n  if (!Number.isInteger(id) || id < 1)\n    return res.status(400).json({error:\"Id invalide\"});\n  const task = service(id);\n  return task ? res.json(task) : res.status(404).json({error:\"Absente\"});\n});\napp.use((err, req, res, next) =>\n  res.status(err.status || 500).json({error:\"Incident\"}));\napp.listen(3000, \"127.0.0.1\");"
+            },
+            {
+              "type": "table",
+              "title": "Depuis http://127.0.0.1:3000",
+              "headers": [
+                "Requête",
+                "Résultat attendu"
+              ],
+              "rows": [
+                [
+                  "GET /tasks/1",
+                  "200 ; {id:1,title:\"Lire\"}"
+                ],
+                [
+                  "GET /tasks/99",
+                  "404 ; {error:\"Absente\"}"
+                ],
+                [
+                  "GET /tasks/abc",
+                  "400 ; {error:\"Id invalide\"}"
+                ],
+                [
+                  "Exception transmise",
+                  "500 ; message générique, sans détails internes"
+                ],
+                [
+                  "GET /tasks/1 avec Content-Type: application/json et corps {",
+                  "400 ; statut de l’erreur JSON préservé"
+                ]
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "req.params.id vaut \"1\". Qui adapte ce texte et qui recherche la tâche ? Que se passe-t-il sans réponse ni next() ?",
+            "answer": "Le contrôleur convertit et valide l’identifiant ; le service demande au repository la tâche. Un middleware qui ne répond pas et n’appelle pas next() laisse la requête en attente."
+          },
+          "sources": [
+            "https://expressjs.com/en/starter/hello-world/",
+            "https://expressjs.com/en/guide/using-middleware/",
+            "https://expressjs.com/en/guide/error-handling/",
+            "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes"
+          ]
+        },
+        {
+          "title": "Valider les données, vérifier les droits",
+          "lead": "Zod est une bibliothèque de validation à l’exécution. TypeScript contrôle statiquement le code ; authentifier établit une identité, autoriser décide de ses droits.",
+          "blocks": [
+            {
+              "type": "code",
+              "title": "Zod 4 : fragment à lire, trois corps JSON fournis",
+              "code": "import { z } from \"zod\";\nconst booking = z.object({\n  seats: z.number().int().min(1).max(4)\n});\nfor (const body of [{seats:2}, {seats:\"2\"}, {seats:5}]) {\n  console.log(booking.safeParse(body).success);\n} // Résultats : true, false, false"
+            },
+            {
+              "type": "table",
+              "title": "Contrat de cette API de réservation",
+              "headers": [
+                "Situation",
+                "Réponse"
+              ],
+              "rows": [
+                [
+                  "Création valide effectuée",
+                  "201 : ressource créée"
+                ],
+                [
+                  "JSON incompréhensible",
+                  "400 : requête incorrecte"
+                ],
+                [
+                  "JSON compris, seats invalide",
+                  "422 : validation refusée"
+                ],
+                [
+                  "Identité absente ou invalide",
+                  "401 + défi WWW-Authenticate adapté"
+                ],
+                [
+                  "Identité valide, permission absente",
+                  "403 : action refusée"
+                ]
+              ]
+            },
+            {
+              "type": "text",
+              "title": "JWT et mot de passe : deux mécanismes",
+              "text": "Le contenu d’un JWT signé est lisible. verify vérifie la signature et exp (date d’expiration) lorsqu’il est présent. Configurer algorithms (algorithmes autorisés), issuer (émetteur) et audience (destinataire) pour imposer les valeurs attendues ; decode lit sans vérifier. Contrôler les droits par ressource. Un sel est une valeur aléatoire propre à chaque mot de passe : utiliser un hachage adapté, comme Argon2id, jamais le texte clair."
+            },
+            {
+              "type": "bullets",
+              "title": "Sécurité du navigateur et du serveur",
+              "items": [
+                "Règle seats : entier de 1 à 4. safeParse rend success avec data ou une erreur ; utiliser data après succès.",
+                "HttpOnly interdit la lecture JavaScript du cookie ; Secure réserve son envoi à HTTPS.",
+                "CSRF : requête forgée exploitant un cookie envoyé automatiquement. Protéger les actions sensibles ; SameSite complète ces protections.",
+                "Lire le propriétaire enregistré côté serveur. Garder secrets et données sensibles hors des logs."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Le document 42 appartient à 9. L’utilisateur authentifié 7 envoie ownerId:7 pour le modifier. Seul le propriétaire est autorisé. Que faire ?",
+            "answer": "Refuser avec 403, sans modification : l’identité 7 diffère du propriétaire 9 enregistré. Le corps ne crée aucun droit."
+          },
+          "sources": [
+            "https://zod.dev/basics",
+            "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+            "https://github.com/auth0/node-jsonwebtoken",
+            "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+            "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes"
+          ]
+        },
+        {
+          "title": "SQL paramétré, ORM et transaction",
+          "lead": "Un ORM fournit des méthodes pour travailler avec la base ; ici Prisma est fixé à 6.19.0. Fragment à lire : db est un client PostgreSQL connecté et prisma un client généré pour Task, mappé sur task(id, title, done).",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Données fournies : id est la clé primaire",
+              "headers": [
+                "id",
+                "title",
+                "done"
+              ],
+              "rows": [
+                [
+                  "1",
+                  "Lire",
+                  "false"
+                ],
+                [
+                  "2",
+                  "Marcher",
+                  "true"
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Deux lectures avec un résultat défini",
+              "code": "const validatedId = 1;\nconst { rows } = await db.query(\n  \"SELECT id, title FROM task WHERE id = $1\", [validatedId]\n);\nconst todo = await prisma.task.findMany({\n  where: {done:false}, orderBy: {id:\"asc\"},\n  select: {title:true}\n});\n// rows : [{id:1, title:\"Lire\"}]\n// todo : [{title:\"Lire\"}]"
+            },
+            {
+              "type": "bullets",
+              "title": "Garanties et limites",
+              "items": [
+                "$1 est un paramètre : sa valeur ne devient pas du code SQL. Valider l’identifiant complète cette séparation ; concaténer une saisie permettrait une injection.",
+                "findMany renvoie un tableau ; findUnique une ligne ou null. where filtre, select choisit les champs ; skip et take paginent, include ajoute une relation.",
+                "PRIMARY KEY identifie ; FOREIGN KEY garantit la référence ; UNIQUE interdit un doublon ; NOT NULL impose une valeur. Les contraintes restent nécessaires malgré l’ORM."
+              ]
+            },
+            {
+              "type": "table",
+              "title": "Prisma et opérations groupées",
+              "headers": [
+                "Outil / notion",
+                "Effet"
+              ],
+              "rows": [
+                [
+                  "migrate dev",
+                  "Créer et appliquer des migrations en développement."
+                ],
+                [
+                  "migrate deploy",
+                  "Appliquer les migrations existantes au déploiement."
+                ],
+                [
+                  "generate",
+                  "Produire le client ; ne pas créer les tables."
+                ],
+                [
+                  "Transaction",
+                  "Valider ensemble ou annuler ensemble les écritures."
+                ]
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Une transaction renomme la tâche 1 puis échoue en supprimant la tâche 99, absente. Après l’annulation, quel titre garde la tâche 1 ?",
+            "answer": "Lire : aucune écriture du groupe n’est conservée. Une transaction ne remplace pas une isolation adaptée aux accès concurrents ni les contraintes métier."
+          },
+          "sources": [
+            "https://node-postgres.com/features/queries",
+            "https://www.postgresql.org/docs/current/ddl-constraints.html",
+            "https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference",
+            "https://www.prisma.io/docs/orm/v6/prisma-migrate/workflows/development-and-production",
+            "https://www.prisma.io/docs/orm/v6/prisma-client/queries/transactions"
+          ]
+        }
+      ],
+      "cheats": [
+        {
+          "title": "Mémo backend et API",
+          "lead": "Transport → règles → données. Chaque requête vérifie ses entrées et ses permissions ; une interface masquée ne protège pas le serveur.",
+          "blocks": [
+            {
+              "type": "diagram",
+              "variant": "request"
+            },
+            {
+              "type": "table",
+              "title": "Codes HTTP : le contrat précise leur usage",
+              "headers": [
+                "Code",
+                "Sens"
+              ],
+              "rows": [
+                [
+                  "200 / 201",
+                  "Succès / création réalisée"
+                ],
+                [
+                  "400 / 422",
+                  "Requête incorrecte / contenu compris mais invalide"
+                ],
+                [
+                  "401",
+                  "Identité à établir ; défi WWW-Authenticate"
+                ],
+                [
+                  "403 / 404",
+                  "Interdit / ressource introuvable"
+                ],
+                [
+                  "409",
+                  "Conflit avec l’état actuel"
+                ],
+                [
+                  "500",
+                  "Incident interne ; réponse sans secrets"
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "title": "Accès aux données : Prisma 6.19.0",
+              "headers": [
+                "Notion",
+                "Repère"
+              ],
+              "rows": [
+                [
+                  "SQL paramétré",
+                  "SELECT ... WHERE id = $1 ; valeur passée séparément"
+                ],
+                [
+                  "findMany / findUnique",
+                  "Tableau, même vide / ligne ou null"
+                ],
+                [
+                  "where / select / include",
+                  "Filtrer / choisir les champs / ajouter une relation"
+                ],
+                [
+                  "orderBy / skip / take",
+                  "Trier / décaler / limiter"
+                ],
+                [
+                  "migrate dev / migrate deploy",
+                  "Écrire et appliquer / appliquer les migrations existantes"
+                ],
+                [
+                  "generate / transaction",
+                  "Générer le client / tout valider ou tout annuler"
+                ]
+              ]
+            },
+            {
+              "type": "bullets",
+              "title": "Points de contrôle",
+              "items": [
+                "Middleware : répondre ou next(). express.json avant les routes ; erreur à quatre paramètres en fin de chaîne. Express 5 transmet le rejet d’un handler async retourné.",
+                "Contrôleur : HTTP ; service : règles ; repository : persistance.",
+                "TypeScript ne valide pas un JSON reçu. Zod safeParse vérifie à l’exécution ; utiliser data après succès.",
+                "JWT : verify, pas decode ; contenu du jeton lisible, sans chiffrement implicite. Vérifier les droits sur chaque ressource.",
+                "Mot de passe : hash adapté et sel. Cookie : HttpOnly, Secure, protection CSRF.",
+                "Prisma et @prisma/client : version 6.19.0 pour ces exemples. Contraintes en base ; fixtures isolées pour les tests."
+              ]
+            }
+          ],
+          "sources": [
+            "https://expressjs.com/en/guide/error-handling/",
+            "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+            "https://zod.dev/basics",
+            "https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference",
+            "https://www.prisma.io/docs/orm/v6/prisma-migrate/workflows/development-and-production",
+            "https://www.prisma.io/docs/orm/v6/prisma-client/queries/transactions"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "react",
+      "title": "React",
+      "subtitle": "Faire dépendre l’écran des données, puis synchroniser ce qui est extérieur au rendu.",
+      "lessons": [
+        {
+          "title": "1 · Composants, props et état d’un formulaire",
+          "lead": "Un composant décrit une interface avec JSX, une syntaxe dans JavaScript. Une prop est une entrée du parent ; l’état est une valeur conservée dont la mise à jour déclenche un rendu.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Avant de lire le code",
+              "headers": [
+                "Mot",
+                "Définition"
+              ],
+              "rows": [
+                [
+                  "Rendu",
+                  "Calcul de la description d’écran depuis les props et l’état."
+                ],
+                [
+                  "useState",
+                  "Valeur d’état et fonction de mise à jour."
+                ],
+                [
+                  "Champ contrôlé",
+                  "value lit l’état ; onChange le modifie."
+                ],
+                [
+                  "Updater",
+                  "Fonction calculant le nouvel état depuis le précédent."
+                ],
+                [
+                  "key",
+                  "Identité stable d’un élément rendu dans une liste."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Composant complet à placer dans App.jsx d’un environnement React",
+              "code": "import { useState } from 'react';\nfunction Name({ name, onName }) {\n  return <input aria-label=\"Prénom\" value={name}\n    onChange={e => onName(e.target.value)} />;\n}\nexport default function App() {\n  const [name, setName] = useState('');\n  const [count, setCount] = useState(0);\n  const items = [{ id: 1, title: 'Lire' }, { id: 2, title: 'Marcher' }];\n  return <main>\n    <Name name={name} onName={setName} />\n    <p>Bonjour {name || 'visiteur'} — {count}</p>\n    <button onClick={() => setCount(n => n + 1)}>Ajouter</button>\n    <ul>{items.map(item => <li key={item.id}>{item.title}</li>)}</ul>\n  </main>;\n}"
+            },
+            {
+              "type": "bullets",
+              "title": "Résultat et responsabilité",
+              "items": [
+                "Pour exécuter, créer un environnement React avec le guide officiel ; aucune API n’est nécessaire.",
+                "Au départ : Bonjour visiteur — 0, avec Lire/Marcher. Saisir Lina puis cliquer deux fois donne Bonjour Lina — 2.",
+                "App possède name : il transmet au champ sa valeur et la fonction permettant de la modifier.",
+                "Pour changer un tableau d’état, produire une nouvelle valeur sans modifier l’ancienne."
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Name possède-t-il l’état name ? Que fait la saisie sans onChange ? Pourquoi id convient-il à key ?",
+            "answer": "Non : App possède l’état et Name reçoit ses props. Sans mise à jour, le champ contrôlé ne suit pas la saisie. id distingue durablement les deux activités."
+          },
+          "sources": [
+            "https://react.dev/learn/passing-props-to-a-component",
+            "https://react.dev/reference/react/useState",
+            "https://react.dev/reference/react-dom/components/input",
+            "https://react.dev/learn/sharing-state-between-components",
+            "https://react.dev/learn/updating-arrays-in-state",
+            "https://react.dev/learn/build-a-react-app-from-scratch"
+          ]
+        },
+        {
+          "title": "2 · Effets, promesses et paramètres d’URL",
+          "lead": "useEffect synchronise un composant avec un travail extérieur au rendu. Une Promise représente un résultat futur ; await attend ce résultat dans une fonction async.",
+          "blocks": [
+            {
+              "type": "code",
+              "title": "Fragment à lire : Detail reçoit une prop id",
+              "code": "import { useEffect, useState } from 'react';\nasync function load(id) {\n  if (id !== 'lire') throw new Error('Activité inconnue'); return 'Lire';\n}\nfunction Detail({ id }) {\n  const [state, set] = useState({ loading: true, text: '' });\n  useEffect(() => {\n    let active = true; set({ loading: true, text: '' });\n    async function run() {\n      try { const text = await load(id); if (active) set({loading:false,text}); }\n      catch (e) { if (active) set({ loading: false, text: e.message }); }\n    }\n    run(); return () => { active = false; };\n  }, [id]);\n  return <p>{state.loading ? 'Chargement…' : state.text}</p>;\n}"
+            },
+            {
+              "type": "bullets",
+              "title": "Dépendances et nettoyage",
+              "items": [
+                "id est une valeur réactive utilisée : [id] relance l’effet quand elle change.",
+                "Le nettoyage empêche un ancien résultat d’actualiser un écran retiré ou une nouvelle sélection.",
+                "load simule une source async : lire donne Lire ; tout autre id provoque Activité inconnue. catch traite cette erreur.",
+                "run utilise await dans try/catch. L’effet retourne le nettoyage, pas une Promise."
+              ]
+            },
+            {
+              "type": "text",
+              "title": "Relier le composant à une URL",
+              "text": "BrowserRouter fournit le contexte ; Routes regroupe les Route. Le chemin /activites/:id choisit un écran ; useParams lit id. Avec /activites/lire, l’écran transmet id=\"lire\" à Detail. Navigate peut rediriger ; une navigation ne protège pas les données d’une API."
+            },
+            {
+              "type": "table",
+              "title": "États attendus",
+              "headers": [
+                "Situation",
+                "Affichage"
+              ],
+              "rows": [
+                [
+                  "Chargement en cours",
+                  "Chargement…"
+                ],
+                [
+                  "id = lire, succès",
+                  "Lire"
+                ],
+                [
+                  "id = autre, échec",
+                  "Activité inconnue"
+                ]
+              ]
+            }
+          ],
+          "exercise": {
+            "question": "Pourquoi enlever id des dépendances est-il incorrect ? Que reçoit useParams pour /activites/lire ?",
+            "answer": "L’effet lit id et doit suivre sa nouvelle valeur ; [] garderait une synchronisation périmée. useParams donne ici id égal à \"lire\"."
+          },
+          "sources": [
+            "https://react.dev/reference/react/useEffect",
+            "https://reactrouter.com/api/declarative-routers/BrowserRouter",
+            "https://reactrouter.com/api/hooks/useParams",
+            "https://reactrouter.com/api/components/Navigate"
+          ]
+        }
+      ],
+      "cheats": [
+        {
+          "title": "React · Mémo de données et d’effets",
+          "lead": "D’abord expliquer l’état attendu de l’écran ; ensuite distinguer son calcul du travail extérieur.",
+          "blocks": [
+            {
+              "type": "table",
+              "title": "Six repères",
+              "headers": [
+                "Notion",
+                "À vérifier"
+              ],
+              "rows": [
+                [
+                  "Composant / props",
+                  "Fonction d’interface / entrées fournies par le parent."
+                ],
+                [
+                  "State / updater",
+                  "Valeur conservée / prochain état depuis le précédent."
+                ],
+                [
+                  "Formulaire contrôlé",
+                  "value + onChange ; une seule source de la valeur."
+                ],
+                [
+                  "Liste / état partagé",
+                  "key stable ; propriétaire dans l’ancêtre commun."
+                ],
+                [
+                  "useEffect",
+                  "Dépendances réactives, nettoyage et erreurs."
+                ],
+                [
+                  "Router",
+                  "Chemin → composant ; useParams lit les segments variables."
+                ]
+              ]
+            },
+            {
+              "type": "code",
+              "title": "Fragments à lire ; imports et id viennent du composant",
+              "code": "const [name, setName] = useState('');\n<input value={name} onChange={e => setName(e.target.value)} />\n// L’effet lit id ; document est fourni par le navigateur.\nuseEffect(() => {\n  const previousTitle = document.title;\n  document.title = `Activité ${id}`;\n  return () => { document.title = previousTitle; };\n}, [id]);"
+            },
+            {
+              "type": "bullets",
+              "title": "Checklist de compréhension",
+              "items": [
+                "Rendu : décrire l’écran sans lancer un appel réseau à chaque calcul.",
+                "Async : attente, succès, vide, erreur ; await dans une fonction async interne.",
+                "Nettoyer abonnement ou opération ; éviter les résultats périmés.",
+                "Modifier objets et tableaux sans mutation directe ; conserver des identifiants stables.",
+                "Navigation : contrôle d’accès supplémentaire sur le serveur pour les données privées."
+              ]
+            }
+          ],
+          "sources": [
+            "https://react.dev/learn/passing-props-to-a-component",
+            "https://react.dev/reference/react/useState",
+            "https://react.dev/reference/react-dom/components/input",
+            "https://react.dev/learn/sharing-state-between-components",
+            "https://react.dev/reference/react/useEffect",
+            "https://reactrouter.com/api/hooks/useParams"
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "label": "Docker · définition d’un conteneur",
+      "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/",
+      "kind": "official",
+      "technology": "docker"
+    },
+    {
+      "label": "Docker · volumes persistants",
+      "url": "https://docs.docker.com/engine/storage/volumes/",
+      "kind": "official",
+      "technology": "docker"
+    },
+    {
+      "label": "Docker Compose · réseau et noms de services",
+      "url": "https://docs.docker.com/compose/how-tos/networking/",
+      "kind": "official",
+      "technology": "docker"
+    },
+    {
+      "label": "TypeScript · Types courants",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html",
+      "kind": "official"
+    },
+    {
+      "label": "OWASP · vérifier les permissions",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "OWASP · stockage des mots de passe",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "Agile Alliance · Modèle de user story",
+      "url": "https://agilealliance.org/glossary/user-story-template/",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · Contraintes",
+      "url": "https://www.postgresql.org/docs/current/ddl-constraints.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · Jointures",
+      "url": "https://www.postgresql.org/docs/current/tutorial-join.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · Agrégats",
+      "url": "https://www.postgresql.org/docs/current/tutorial-agg.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · Index",
+      "url": "https://www.postgresql.org/docs/current/indexes.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · Transactions",
+      "url": "https://www.postgresql.org/docs/current/tutorial-transactions.html",
+      "kind": "official"
+    },
+    {
+      "label": "node-postgres · Requêtes paramétrées",
+      "url": "https://node-postgres.com/features/queries",
+      "kind": "official"
+    },
+    {
+      "label": "Node.js · exécuter des tests",
+      "url": "https://nodejs.org/api/test.html",
+      "kind": "official",
+      "technology": "tests"
+    },
+    {
+      "label": "Node.js · vérifier un résultat avec assert",
+      "url": "https://nodejs.org/api/assert.html",
+      "kind": "official",
+      "technology": "tests"
+    },
+    {
+      "label": "Microsoft Learn · cycle Red, Green, Refactor",
+      "url": "https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions-1/contact-manager/iteration-6-use-test-driven-development-cs",
+      "kind": "official",
+      "technology": "tests"
+    },
+    {
+      "label": "Nanci et Espinasse · Merise, deuxième génération (ouvrage des auteurs)",
+      "url": "https://pageperso.lis-lab.fr/bernard.espinasse/wp-content/uploads/2021/12/LivreMerisePDF-total-12sept14.pdf",
+      "kind": "academic"
+    },
+    {
+      "label": "Pierre Gérard · Modélisation des systèmes d'information, cours universitaire",
+      "url": "https://lipn.univ-paris13.fr/~gerard/docs/cours/merise-slides.pdf",
+      "kind": "academic"
+    },
+    {
+      "label": "Mocodo · Manuel de référence de l'auteur",
+      "url": "https://laowantong.github.io/mocodo/doc/fr_refman.html",
+      "kind": "official"
+    },
+    {
+      "label": "Stéphane Crozat · Théorie de la normalisation relationnelle",
+      "url": "https://stph.scenari-community.org/bdd/nor1.pdf",
+      "kind": "academic"
+    },
+    {
+      "label": "Sibel Adali, RPI · Dépendances, formes normales et décomposition",
+      "url": "https://cs.rpi.edu/~sibel/csci4380/fall2020/course_notes/normalization.html",
+      "kind": "academic"
+    },
+    {
+      "label": "OMG · UML 2.5.1, standard et document normatif, chapitre 18",
+      "url": "https://www.omg.org/spec/UML/2.5.1",
+      "kind": "standard"
+    },
+    {
+      "label": "PostgreSQL · Interroger une table",
+      "url": "https://www.postgresql.org/docs/current/tutorial-select.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · Comparaisons et NULL",
+      "url": "https://www.postgresql.org/docs/current/functions-comparison.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · Sous-requêtes",
+      "url": "https://www.postgresql.org/docs/current/functions-subquery.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · RETURNING",
+      "url": "https://www.postgresql.org/docs/current/dml-returning.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · PREPARE et paramètres",
+      "url": "https://www.postgresql.org/docs/current/sql-prepare.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · ORDER BY",
+      "url": "https://www.postgresql.org/docs/current/queries-order.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · LIMIT et OFFSET",
+      "url": "https://www.postgresql.org/docs/current/queries-limit.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · COALESCE et expressions conditionnelles",
+      "url": "https://www.postgresql.org/docs/current/functions-conditional.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · UPDATE",
+      "url": "https://www.postgresql.org/docs/current/tutorial-update.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · DELETE",
+      "url": "https://www.postgresql.org/docs/current/tutorial-delete.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · INSERT et données d'exemple",
+      "url": "https://www.postgresql.org/docs/current/tutorial-populate.html",
+      "kind": "official"
+    },
+    {
+      "label": "PostgreSQL · EXPLAIN",
+      "url": "https://www.postgresql.org/docs/current/using-explain.html",
+      "kind": "official"
+    },
+    {
+      "label": "TypeScript · Bases et compilateur",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/basic-types.html",
+      "kind": "official"
+    },
+    {
+      "label": "TypeScript · Fonctions",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/functions.html",
+      "kind": "official"
+    },
+    {
+      "label": "TypeScript · Narrowing et unions discriminées",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html",
+      "kind": "official"
+    },
+    {
+      "label": "TypeScript · Types d'objets et tuples",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html",
+      "kind": "official"
+    },
+    {
+      "label": "TypeScript · Génériques",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+      "kind": "official"
+    },
+    {
+      "label": "TypeScript · Types utilitaires",
+      "url": "https://www.typescriptlang.org/docs/handbook/utility-types.html",
+      "kind": "official"
+    },
+    {
+      "label": "TypeScript · Modules et imports de types",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/modules.html",
+      "kind": "official"
+    },
+    {
+      "label": "TypeScript · Référence tsconfig",
+      "url": "https://www.typescriptlang.org/tsconfig/",
+      "kind": "official"
+    },
+    {
+      "label": "tsx · Exécution et vérification des types",
+      "url": "https://tsx.is/typescript",
+      "kind": "official"
+    },
+    {
+      "label": "Docker · définition d’une image",
+      "url": "https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/",
+      "kind": "official",
+      "technology": "docker"
+    },
+    {
+      "label": "Docker · instructions du Dockerfile",
+      "url": "https://docs.docker.com/reference/dockerfile/",
+      "kind": "official",
+      "technology": "docker"
+    },
+    {
+      "label": "Docker · réutilisation du cache",
+      "url": "https://docs.docker.com/get-started/docker-concepts/building-images/using-the-build-cache/",
+      "kind": "official",
+      "technology": "docker"
+    },
+    {
+      "label": "Docker Compose · démarrage et disponibilité",
+      "url": "https://docs.docker.com/compose/how-tos/startup-order/",
+      "kind": "official",
+      "technology": "docker"
+    },
+    {
+      "label": "Docker Compose · arrêt et suppression",
+      "url": "https://docs.docker.com/reference/cli/docker/compose/down/",
+      "kind": "official",
+      "technology": "docker"
+    },
+    {
+      "label": "Node.js · créer un serveur HTTP",
+      "url": "https://nodejs.org/api/http.html",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "Vitest · installer et lancer des tests",
+      "url": "https://vitest.dev/guide/",
+      "kind": "official",
+      "technology": "tests"
+    },
+    {
+      "label": "Vitest · comparer les résultats",
+      "url": "https://vitest.dev/api/expect.html",
+      "kind": "official",
+      "technology": "tests"
+    },
+    {
+      "label": "Express 5 · premier serveur",
+      "url": "https://expressjs.com/en/starter/hello-world/",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "Express 5 · chaîne de middlewares",
+      "url": "https://expressjs.com/en/guide/using-middleware/",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "Express 5 · traitement des erreurs",
+      "url": "https://expressjs.com/en/guide/error-handling/",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "Zod · validation des données à l’exécution",
+      "url": "https://zod.dev/basics",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "RFC 9110 · codes de réponse HTTP",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes",
+      "kind": "standard",
+      "technology": "backend"
+    },
+    {
+      "label": "jsonwebtoken · signature, verify et decode",
+      "url": "https://github.com/auth0/node-jsonwebtoken",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "MDN · propriétés d’un cookie HTTP",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "Prisma ORM 6 · méthodes du client",
+      "url": "https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "Prisma ORM 6 · migrations en développement et déploiement",
+      "url": "https://www.prisma.io/docs/orm/v6/prisma-migrate/workflows/development-and-production",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "Prisma ORM 6 · transactions",
+      "url": "https://www.prisma.io/docs/orm/v6/prisma-client/queries/transactions",
+      "kind": "official",
+      "technology": "backend"
+    },
+    {
+      "label": "Microsoft Learn · organiser des tests unitaires avec Arrange, Act, Assert",
+      "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices",
+      "kind": "official",
+      "technology": "tests"
+    },
+    {
+      "label": "React · Créer une application",
+      "url": "https://react.dev/learn/build-a-react-app-from-scratch",
+      "kind": "official"
+    },
+    {
+      "label": "React · Transmettre des props",
+      "url": "https://react.dev/learn/passing-props-to-a-component",
+      "kind": "official"
+    },
+    {
+      "label": "React · useState",
+      "url": "https://react.dev/reference/react/useState",
+      "kind": "official"
+    },
+    {
+      "label": "React · Partager un état",
+      "url": "https://react.dev/learn/sharing-state-between-components",
+      "kind": "official"
+    },
+    {
+      "label": "React · Champs input",
+      "url": "https://react.dev/reference/react-dom/components/input",
+      "kind": "official"
+    },
+    {
+      "label": "React · Mettre à jour un tableau",
+      "url": "https://react.dev/learn/updating-arrays-in-state",
+      "kind": "official"
+    },
+    {
+      "label": "React · useEffect et nettoyage",
+      "url": "https://react.dev/reference/react/useEffect",
+      "kind": "official"
+    },
+    {
+      "label": "React Router · BrowserRouter",
+      "url": "https://reactrouter.com/api/declarative-routers/BrowserRouter",
+      "kind": "official"
+    },
+    {
+      "label": "React Router · useParams",
+      "url": "https://reactrouter.com/api/hooks/useParams",
+      "kind": "official"
+    },
+    {
+      "label": "React Router · Navigate",
+      "url": "https://reactrouter.com/api/components/Navigate",
+      "kind": "official"
+    }
+  ]
+}

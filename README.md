@@ -51,6 +51,21 @@ Dans les cartes : `Espace` révèle la réponse, `1` = à revoir, `2` = difficil
 
 « En mémoire » compte les cartes évaluées avec succès et un intervalle de trois jours ou plus. Cet indicateur décrit les autoévaluations, pas un niveau certifié. La validation de lecture du jour fonctionne aussi sur une fiche déjà parcourue.
 
+## Réviser avec les PDF
+
+- [Cours progressif](output/pdf/CDA-cours-progressif.pdf) : 39 pages, 24 leçons, schémas, exemples autonomes et exercices dont les corrigés sont regroupés à la fin.
+- [Cheatsheets](output/pdf/CDA-cheatsheets.pdf) : 9 fiches mémo, dont 3 pour Merise, suivies des références ; 13 pages au total.
+
+Ces supports couvrent **Merise, TypeScript, SQL, Docker, tests JavaScript, backend/API et React**. Chaque notion renvoie à ses documentations officielles, spécifications ou références académiques. Les exemples fictifs ne supposent aucune connaissance des projets personnels. Les PDF se lisent hors ligne et peuvent s’imprimer au format A4 ; les liens de référence nécessitent Internet.
+
+Le contenu éditable est conservé dans `data/printable-revisions.json`. Pour régénérer les deux documents avec Python 3 et ReportLab installé :
+
+```sh
+python3 scripts/build-revision-pdfs.py
+```
+
+Le générateur utilise les polices Arial et Courier New sur macOS, ou les polices Vera fournies avec ReportLab ailleurs. Les rendus et manifestes intermédiaires restent dans `tmp/pdfs/`, hors du dépôt. La vérification des documents est décrite dans `tests/verification-pdf.md`.
+
 ## Conserver sa progression
 
 Les notes, réponses, évaluations et activités sont stockées dans `localStorage`, dans le navigateur et pour l’adresse utilisée. Le serveur n’écrit pas ces données sur disque. Exporter régulièrement un fichier JSON depuis **Réglages & sauvegarde**. Avant un import, le site télécharge une copie de la progression actuelle, puis valide et remplace l’état.
