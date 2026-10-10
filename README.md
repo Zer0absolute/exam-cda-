@@ -53,10 +53,12 @@ Dans les cartes : `Espace` révèle la réponse, `1` = à revoir, `2` = difficil
 
 ## Réviser avec les PDF
 
-- [Cours progressif](output/pdf/CDA-cours-progressif.pdf) : 39 pages, 24 leçons, schémas, exemples autonomes et exercices dont les corrigés sont regroupés à la fin.
-- [Cheatsheets](output/pdf/CDA-cheatsheets.pdf) : 9 fiches mémo, dont 3 pour Merise, suivies des références ; 13 pages au total.
+- [Cours progressif](output/pdf/CDA-cours-progressif.pdf) : 34 leçons et 34 exercices corrigés ; 114 pages, avec repères JavaScript, sommaire cliquable, schémas, exemples autonomes et références.
+- [Cheatsheets](output/pdf/CDA-cheatsheets.pdf) : 9 fiches mémo de deux pages, dont 3 pour Merise, suivies des références ; 23 pages au total.
 
 Ces supports couvrent **Merise, TypeScript, SQL, Docker, tests JavaScript, backend/API et React**. Chaque notion renvoie à ses documentations officielles, spécifications ou références académiques. Les exemples fictifs ne supposent aucune connaissance des projets personnels. Les PDF se lisent hors ligne et peuvent s’imprimer au format A4 ; les liens de référence nécessitent Internet.
+
+La version révisée du 10 octobre présente le vocabulaire et les symboles avant leur utilisation, suit les données étape par étape et explique les corrections. Une leçon peut occuper plusieurs pages pour garder une taille de texte lisible. Les liens permettent de passer de l’exercice au corrigé puis de revenir à la leçon. Lire une leçon, tenter son exercice, puis utiliser la fiche mémo correspondante pour rappeler ce qui a été compris.
 
 Le contenu éditable est conservé dans `data/printable-revisions.json`. Pour régénérer les deux documents avec Python 3 et ReportLab installé :
 
@@ -64,7 +66,7 @@ Le contenu éditable est conservé dans `data/printable-revisions.json`. Pour r�
 python3 scripts/build-revision-pdfs.py
 ```
 
-Le générateur utilise les polices Arial et Courier New sur macOS, ou les polices Vera fournies avec ReportLab ailleurs. Les rendus et manifestes intermédiaires restent dans `tmp/pdfs/`, hors du dépôt. La vérification des documents est décrite dans `tests/verification-pdf.md`.
+Le générateur utilise Arial et Courier New Bold pour les blocs de code sur macOS, ou les polices Vera fournies avec ReportLab ailleurs. Les rendus et manifestes intermédiaires restent dans `tmp/pdfs/`, hors du dépôt. La vérification des documents est décrite dans `tests/verification-pdf.md`.
 
 ## Conserver sa progression
 
